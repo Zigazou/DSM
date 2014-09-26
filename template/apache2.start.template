@@ -1,0 +1,5 @@
+#!/bin/bash
+apache2 -f "***APACHECONF***" -k start
+while [ ! -f "***PIDFILE***" ]; do sleep 0.5; done
+notify-send --icon=list-add "***SITE*** - Apache2 started"
+

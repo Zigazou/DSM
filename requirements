@@ -1,0 +1,23 @@
+#!/bin/bash
+ERR=$(printf "setaf 1\nbold\n" | tput -S 2> /dev/null)
+NORM=$(tput sgr0 2> /dev/null)
+
+function check {
+    local message="$1" state="OK"
+    shift
+    "$@" > /dev/null 2> /dev/null
+    [ $? -ne 0 ] && state="${ERR}FAIL${NORM}"
+    printf "%-24s %s\n" "$message" "$state"
+}
+
+check "MySQL daemon"        test -x /usr/sbin/mysqld
+check "MySQL installer"     test -x /usr/bin/mysql_install_db
+check "Python 3"            which python3
+check "Python 3 subprocess" python3 -c "import subprocess"
+check "Python 3 os"         python3 -c "import os"
+check "Python 3 os.path"    python3 -c "import os.path"
+check "Python 3 pwd"        python3 -c "import pwd"
+check "Notify-send"         which notify-send
+check "Apache2"             which apache2
+check "Apache2 modules"     test -d /etc/apache2/mods-enabled
+

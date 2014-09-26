@@ -1,0 +1,31 @@
+#!/bin/bash
+
+# Duplication of mysqld is needed because it is limited by AppArmor.
+# Duplication and patching of mysql_install_db is needed because it directly
+# points to /usr/sbin/mysqld
+
+destination="$1"
+
+if [ "$destination" == "" ]
+then
+    echo "ERROR: You must specify a custom bin directory path !"
+    exit 1
+fi
+
+destination=$(readlink -e -- "$destination")
+
+# Create the bin directory if necessary
+mkdir --parents -- "$destination"
+
+# Duplicate the mysqld executable in order to make it independent from
+# AppArmor restrictions
+cp -- /usr/sbin/mysqld "$destination"
+
+# Duplicate and patch the mysql_install_db script in order to make it use our
+# mysqld executable
+cat /usr/bin/mysql_install_db \
+    | sed "s|mysqld=.*\$|mysqld=\"${destination}/mysqld\"|g" \
+    > "${destination}/mysql_install_db"
+
+chmod 700 "${destination}/mysql_install_db"
+

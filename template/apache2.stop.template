@@ -1,0 +1,4 @@
+#!/bin/bash
+notify-send --icon=list-remove "***SITE*** - Stopping Apache2"
+apache2 -f "***APACHECONF***" -k stop
+

@@ -1,0 +1,3 @@
+#!/bin/bash
+notify-send --icon=list-remove "***SITE*** - Stopping MySQL"
+kill $(cat ***PIDFILE***)
