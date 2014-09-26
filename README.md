@@ -58,8 +58,8 @@ Example
 
 Place yourself in the ~/www directory:
 
-    dsm install site1
-    dsm install site2
+    ./dsm.py install site1
+    ./dsm.py install site2
 
 You should have 2 directories created:
 
@@ -68,7 +68,7 @@ You should have 2 directories created:
 
 You may verify it with the following command:
 
-    dsm list
+    ./dsm.py list
 
 In each of these directories are scripts for running and stopping servers:
 
