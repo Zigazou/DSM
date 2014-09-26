@@ -1,10 +1,10 @@
 DSM
 ===
 
-Developper’s Sites Manager (or DSM) allows the developper to manage a
+developer’s Sites Manager (or DSM) allows the developer to manage a
 collection of sites meant for development purposes
 
-**WARNING**: DSM is for developper’s environment ONLY! It must not be
+**WARNING**: DSM is for developer’s environment ONLY! It must not be
 used in production environment, you’ve been warned.
 
 Requirements
@@ -36,7 +36,7 @@ How it works
 
 It creates Apache2 (2.2 and 2.4) and MySQL instances running as the current
 user (1 site = 1 Apache2 instance + 1 MySQL instance). It thus does not require
-the developper to modify its system configuration. The sites created with DSM
+the developer to modify its system configuration. The sites created with DSM
 use port numbers between 10000 and 10100.
 
 It also creates a default database with the site identifier, using it also as
