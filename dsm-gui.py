@@ -19,14 +19,42 @@ def error_dialog(title, message):
 
 class DSMHandler:
     def __init__(self, builder):
-        self.currentSite = None
         self.bld = builder
         self.initGUI()
 
     def initGUI(self):
         self.refreshSites()
 
+    def getCurrentSite(self):
+        selection = self.bld.get_object('tvwSites').get_selection()
+        (model, treeiter) = selection.get_selected()
+
+        if treeiter != None:
+            return model.get(treeiter, 0)[0]
+        else:
+            return None
+    
+    def setCurrentSite(self, site_id):
+        if site_id == None:
+            return
+
+        # Search for a site_id in available rows
+        tvwSites = self.bld.get_object('tvwSites')
+        model = tvwSites.get_model()
+        treeiter = model.get_iter_first()
+        while treeiter != None:
+            if site_id == model.get_value(treeiter, 0):
+                tvwSites.get_selection().select_iter(treeiter)
+                break
+
+            treeiter = model.iter_next(treeiter)
+
+        self.onTvwSitesCursorChanged(tvwSites)
+
     def refreshSites(self):
+        # Keep track of the current selected item
+        current_site = self.getCurrentSite()
+
         # Prepare data for the rows
         text = { True: 'running', False: 'stopped' }
         rows = [
@@ -40,8 +68,8 @@ class DSMHandler:
         for row in rows:
             store.append(row)
 
-        if self.currentSite != None:
-            self.bld.get_object("tvwSites").set_cursor(self.currentSite)
+        # Reselect the previously selected item
+        self.setCurrentSite(current_site)
 
     def updateRunButton(self, button, btntype, current_state, message):
         assert current_state in [None, 'stopped', 'running']
@@ -117,9 +145,6 @@ class DSMHandler:
         if treeiter != None:
             wwwrun = store.get_value(treeiter, 2)
             dbrun = store.get_value(treeiter, 3)
-            self.currentSite = tv.get_cursor()
-        else:
-            self.currentSite = None
 
         self.updateRunButtons(wwwrun, dbrun)
 
