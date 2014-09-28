@@ -284,14 +284,14 @@ def command_remove(args):
 
 def command_help(args):
     help = [
-        'DSM is for Dev Sites Manager: it manages developer’s sites.',
+        'DeSiMa is for Dev Sites Manager: it manages developer’s sites.',
         '',
         'It creates Apache2 (2.2 and 2.4) and MySQL instances running as the',
         'current user. It thus does not require the developer to modify its',
         'system configuration. The sites created with DSM use port numbers',
         'between {mini} and {maxi}.'.format(mini=PORT_MIN, maxi=PORT_MAX),
         '',
-        'DSM contains special code to get around AppArmor limitations on',
+        'DeSiMa contains special code to get around AppArmor limitations on',
         'MySQL under Ubuntu. It also keeps WWW files and DB files under the',
         'same directory. It requires Python3 to run.',
         '',
@@ -301,7 +301,7 @@ def command_help(args):
         '    - install <site_id> --> create a new site (HTTP and DB)',
         '    - remove <site_id>  --> remove a site',
         '',
-        'WARNING: DSM is for developer’s environment ONLY ! It must not be',
+        'WARNING: DeSiMa is for developer’s environment ONLY ! It must not be',
         '         used in production environment.',
         ''
     ]
