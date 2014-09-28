@@ -200,6 +200,11 @@
       <action-widget response="0">btnCancel</action-widget>
     </action-widgets>
   </object>
+  <object class="GtkImage" id="imgShowLog">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <property name="stock">gtk-info</property>
+  </object>
   <object class="GtkImage" id="imgRunDB">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
@@ -416,6 +421,23 @@
               </packing>
             </child>
             <child>
+              <object class="GtkButton" id="btnShowLog">
+                <property name="label" translatable="yes">Show logs</property>
+                <property name="visible">True</property>
+                <property name="sensitive">False</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <property name="use_action_appearance">False</property>
+                <property name="image">imgShowLog</property>
+                <signal name="clicked" handler="onBtnShowLog" swapped="no"/>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">4</property>
+              </packing>
+            </child>
+            <child>
               <object class="GtkButton" id="btnNew">
                 <property name="label">gtk-add</property>
                 <property name="visible">True</property>
@@ -428,7 +450,7 @@
               <packing>
                 <property name="expand">False</property>
                 <property name="fill">True</property>
-                <property name="position">4</property>
+                <property name="position">5</property>
               </packing>
             </child>
             <child>
@@ -444,7 +466,7 @@
               <packing>
                 <property name="expand">False</property>
                 <property name="fill">True</property>
-                <property name="position">5</property>
+                <property name="position">6</property>
               </packing>
             </child>
           </object>

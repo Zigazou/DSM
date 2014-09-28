@@ -125,6 +125,10 @@ def create_default_user(site_id, port, mysql_config_filename):
     # Stop the server
     sdo(STOP, DB, site_id, port)
 
+def mysql_log_file(site_id, port):
+    directory_name = site_directory(site_id, port)
+    return [join(directory_name, 'db', 'log', 'mysql_error.log')]
+
 def install_mysql(site_id, port, directory_name):
     """Create a standalone MySQL installation"""
 
@@ -181,6 +185,11 @@ def install_mysql(site_id, port, directory_name):
         )
 
     create_default_user(site_id, port, mysql_config_filename)
+
+def apache2_log_file(site_id, port):
+    directory_name = site_directory(site_id, port)
+    return [join(directory_name, 'www', 'log', 'apache2_error.log'),
+            join(directory_name, 'www', 'log', 'apache2_access.log')]
 
 def install_apache2(site_id, port, directory_name):
     """Create a standalone Apache2 installation"""

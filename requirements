@@ -20,4 +20,5 @@ check "Python 3 pwd"        python3 -c "import pwd"
 check "Notify-send"         which notify-send
 check "Apache2"             which apache2
 check "Apache2 modules"     test -d /etc/apache2/mods-enabled
+check "Gnome System Log"    which gnome-system-log
 
