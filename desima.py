@@ -38,10 +38,9 @@ def list_applications():
     """Return a list of sites"""
     base_dir = join(BASE, 'application')
     return [extract_application(application, base_dir)
-            for application in
-                [entry for entry in listdir(base_dir)
-                 if isfile(join(base_dir, entry))]
-            if application != None
+            for application in listdir(base_dir)
+            if isfile(join(base_dir, application))
+            and extract_application(application, base_dir) != None
            ]
 
 def is_valid_site_id(site_id):
@@ -264,6 +263,8 @@ def install_apache2(site_id, port, directory_name):
         )
 
 def install_application(site_id, port, application_file):
+    assert isfile(application_file)
+
     destination = join(site_directory(site_id, port), 'www')
 
     # Identifies the archive type
@@ -305,7 +306,9 @@ def install_site(site_id, port, application_file):
 
     install_mysql(site_id, port, directory_name)
     install_apache2(site_id, port, directory_name)
-    install_application(site_id, port, application_file)
+
+    if application_file != None:
+        install_application(site_id, port, application_file)
 
 def remove_site(site_id):
     if not is_valid_site_id(site_id):

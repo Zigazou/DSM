@@ -123,9 +123,11 @@ class DesimaHandler:
 
         # Update list of applications
         self.stoApplication.clear()
-        self.stoApplication.append(('None', 'None'))
+        self.stoApplication.append(('None', ''))
         for application in list_applications():
             self.stoApplication.append(application)
+
+        self.cbtNewApplication.set_active(0)
 
         while True:
             rc = self.dlgNew.run()
@@ -147,8 +149,8 @@ class DesimaHandler:
                 continue
 
             application_file = None
-            active = self.cbtNewApplication.get_active_iter()
-            if active != None:
+            if self.cbtNewApplication.get_active() > 0:
+                active = self.cbtNewApplication.get_active_iter()
                 application_file = self.stoApplication.get(active, 1)[0]
         
             install_site(site_id, find_unused_port(), application_file)
