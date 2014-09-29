@@ -229,12 +229,9 @@
     <columns>
       <!-- column-name application -->
       <column type="gchararray"/>
+      <!-- column-name filepath -->
+      <column type="gchararray"/>
     </columns>
-    <data>
-      <row>
-        <col id="0" translatable="yes">None</col>
-      </row>
-    </data>
   </object>
   <object class="GtkListStore" id="stoDbServer">
     <columns>

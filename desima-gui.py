@@ -3,7 +3,7 @@ from gi.repository import Gtk
 from os.path import isfile
 from desima import (sites_states, sdo, START, STOP, ISRUNNING, WWW, DB,
                     is_valid_site_id, find_site, install_site, find_unused_port,
-                    mysql_log_file, apache2_log_file)
+                    mysql_log_file, apache2_log_file, list_applications)
 from subprocess import Popen
 
 def error_dialog(title, message):
@@ -35,6 +35,8 @@ class DesimaHandler:
         self.btnShowLog = builder.get_object("btnShowLog")
         self.dlgNew = builder.get_object("dlgNew")
         self.entSiteId = builder.get_object("entSiteId")
+        self.cbtNewApplication = builder.get_object("cbtNewApplication")
+        self.stoApplication = builder.get_object("stoApplication")
 
         self.initGUI()
 
@@ -119,6 +121,12 @@ class DesimaHandler:
     def onBtnNewClicked(self, button):
         self.dlgNew.show_all()
 
+        # Update list of applications
+        self.stoApplication.clear()
+        self.stoApplication.append(('None', 'None'))
+        for application in list_applications():
+            self.stoApplication.append(application)
+
         while True:
             rc = self.dlgNew.run()
 
@@ -137,8 +145,13 @@ class DesimaHandler:
             if find_site(site_id) != None:
                 error_dialog('Invalid Site ID', 'This site already exists !')
                 continue
+
+            application_file = None
+            active = self.cbtNewApplication.get_active_iter()
+            if active != None:
+                application_file = self.stoApplication.get(active, 1)[0]
         
-            install_site(site_id, find_unused_port())
+            install_site(site_id, find_unused_port(), application_file)
             break
 
         self.dlgNew.hide()

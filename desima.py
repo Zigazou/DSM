@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 """Create a custom installation of Apache and MySQL for the current user"""
 
-from os.path import expanduser, isdir, join
-from os import listdir, mkdir, getuid, chmod, devnull
+from os.path import expanduser, isdir, isfile, join
+from os import listdir, mkdir, rmdir, getuid, chmod, devnull, rename
 from stat import S_IREAD, S_IEXEC
 from pwd import getpwuid
 from subprocess import check_call, check_output, call, Popen, PIPE
 from sys import argv, exit
 from re import compile as rcompile
+from string import capwords
 
 DEVNULL = open(devnull, "w")
 BASE = expanduser("~/www")
@@ -19,6 +20,29 @@ USERNAME = getpwuid(getuid())[0]
 
 SITE_FORMAT = rcompile(r'^site-\w+-\d{4,5}$')
 VALID_SITE_ID = rcompile(r'^[a-zA-Z]\w{0,23}$')
+APPLICATION_FORMAT = rcompile(r'^(.*)\.(tar\.gz|tar\.bz2)$')
+
+def extract_application(filename, base_dir):
+    result = APPLICATION_FORMAT.match(filename)
+    if result == None:
+        return None
+
+    human_name = result.group(1)
+    human_name = human_name.replace('-', ' ')
+    human_name = human_name.replace('_', ' ')
+    human_name = capwords(human_name)
+
+    return (human_name, join(base_dir, filename))
+
+def list_applications():
+    """Return a list of sites"""
+    base_dir = join(BASE, 'application')
+    return [extract_application(application, base_dir)
+            for application in
+                [entry for entry in listdir(base_dir)
+                 if isfile(join(base_dir, entry))]
+            if application != None
+           ]
 
 def is_valid_site_id(site_id):
     return VALID_SITE_ID.match(site_id)
@@ -239,7 +263,33 @@ def install_apache2(site_id, port, directory_name):
             rights
         )
 
-def install_site(site_id, port):
+def install_application(site_id, port, application_file):
+    destination = join(site_directory(site_id, port), 'www')
+
+    # Identifies the archive type
+    if application_file.endswith('.tar.gz'):
+        (extract, listing) = ('xzf', 'tzf')
+    else:
+        (extract, listing) = ('xjf', 'tjf')
+
+    # Get root directory of the application
+    root_directory = check_output(
+        ['tar', listing, application_file],
+        universal_newlines=True
+    ).splitlines()[0]
+
+    # Extract application
+    check_call(
+        ['tar', extract, application_file, '--directory', destination],
+        stdout=DEVNULL
+    )
+
+    # Move application to the doc directory
+    doc_dir = join(destination, 'doc')
+    rmdir(doc_dir)
+    rename(join(destination, root_directory), doc_dir)
+
+def install_site(site_id, port, application_file):
     """Create a site with standalone Apache2 and MySQL installation"""
     if not is_valid_site_id(site_id):
         raise ValueError('Invalid site ID, must be [a-zA-Z][a-zA-Z0-9_]{0,23}')
@@ -255,6 +305,7 @@ def install_site(site_id, port):
 
     install_mysql(site_id, port, directory_name)
     install_apache2(site_id, port, directory_name)
+    install_application(site_id, port, application_file)
 
 def remove_site(site_id):
     if not is_valid_site_id(site_id):
