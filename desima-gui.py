@@ -1,9 +1,9 @@
 #!/usr/bin/python3
 from gi.repository import Gtk
 from os.path import isfile
-from dsm import (sites_states, sdo, START, STOP, ISRUNNING, WWW, DB,
-                 is_valid_site_id, find_site, install_site, find_unused_port,
-                 mysql_log_file, apache2_log_file)
+from desima import (sites_states, sdo, START, STOP, ISRUNNING, WWW, DB,
+                    is_valid_site_id, find_site, install_site, find_unused_port,
+                    mysql_log_file, apache2_log_file)
 from subprocess import Popen
 
 def error_dialog(title, message):
@@ -20,7 +20,7 @@ def error_dialog(title, message):
 
     dialog.destroy()
 
-class DSMHandler:
+class DesimaHandler:
     def __init__(self, builder):
         self.bld = builder
 
@@ -113,7 +113,7 @@ class DSMHandler:
         sdo(action, servers[btntype], site_id, port)
         self.refreshSites()
 
-    def onWinDsmDelete(self, *args):
+    def onWinDesimaDelete(self, *args):
         Gtk.main_quit(*args)
 
     def onBtnNewClicked(self, button):
@@ -181,7 +181,7 @@ class DSMHandler:
             logs = [log for log in mysql_log_file(site_id, port) +
                                    apache2_log_file(site_id, port)
                         if isfile(log)]
-            Popen(["gnome-system-log"] + logs )
+            Popen(["gnome-system-log"] + logs)
 
 def main(gladeFile, winID):
     # Show images on buttons
@@ -191,7 +191,7 @@ def main(gladeFile, winID):
     # Build the interface
     builder = Gtk.Builder()
     builder.add_from_file(gladeFile)
-    builder.connect_signals(DSMHandler(builder))
+    builder.connect_signals(DesimaHandler(builder))
 
     # Show the window
     window = builder.get_object(winID)
@@ -200,5 +200,5 @@ def main(gladeFile, winID):
     Gtk.main()
 
 if __name__ == '__main__':
-    main("dsm-gui.glade", "winDSM")
+    main("desima-gui.glade", "winDesima")
 

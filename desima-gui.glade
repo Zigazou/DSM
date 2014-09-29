@@ -270,15 +270,15 @@
       </row>
     </data>
   </object>
-  <object class="GtkWindow" id="winDSM">
+  <object class="GtkWindow" id="winDesima">
     <property name="can_focus">False</property>
     <property name="border_width">10</property>
     <property name="title" translatable="yes">Dev Sites Manager</property>
     <property name="window_position">center-on-parent</property>
     <property name="default_width">700</property>
-    <signal name="delete-event" handler="onWinDsmDelete" swapped="no"/>
+    <signal name="delete-event" handler="onWinDesimaDelete" swapped="no"/>
     <child>
-      <object class="GtkHBox" id="boxDSM">
+      <object class="GtkHBox" id="boxDesima">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="spacing">10</property>
@@ -494,7 +494,7 @@
                 <property name="receives_default">True</property>
                 <property name="use_action_appearance">False</property>
                 <property name="use_stock">True</property>
-                <signal name="clicked" handler="onWinDsmDelete" swapped="no"/>
+                <signal name="clicked" handler="onWinDesimaDelete" swapped="no"/>
               </object>
               <packing>
                 <property name="expand">False</property>
