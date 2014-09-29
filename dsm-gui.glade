@@ -200,11 +200,6 @@
       <action-widget response="0">btnCancel</action-widget>
     </action-widgets>
   </object>
-  <object class="GtkImage" id="imgShowLog">
-    <property name="visible">True</property>
-    <property name="can_focus">False</property>
-    <property name="stock">gtk-info</property>
-  </object>
   <object class="GtkImage" id="imgRunDB">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
@@ -214,6 +209,11 @@
     <property name="visible">True</property>
     <property name="can_focus">False</property>
     <property name="stock">gtk-media-play</property>
+  </object>
+  <object class="GtkImage" id="imgShowLog">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <property name="stock">gtk-info</property>
   </object>
   <object class="GtkImage" id="imgStopDB">
     <property name="visible">True</property>
@@ -275,9 +275,10 @@
     <property name="border_width">10</property>
     <property name="title" translatable="yes">Dev Sites Manager</property>
     <property name="window_position">center-on-parent</property>
+    <property name="default_width">700</property>
     <signal name="delete-event" handler="onWinDsmDelete" swapped="no"/>
     <child>
-      <object class="GtkVBox" id="boxDSM">
+      <object class="GtkHBox" id="boxDSM">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="spacing">10</property>
@@ -365,11 +366,10 @@
           </packing>
         </child>
         <child>
-          <object class="GtkHBox" id="boxButtons">
+          <object class="GtkVBox" id="boxButtons">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="spacing">10</property>
-            <property name="homogeneous">True</property>
             <child>
               <object class="GtkButton" id="btnRefresh">
                 <property name="label">gtk-refresh</property>
@@ -384,6 +384,17 @@
                 <property name="expand">False</property>
                 <property name="fill">True</property>
                 <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkHSeparator" id="hsp1">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
               </packing>
             </child>
             <child>
@@ -438,6 +449,17 @@
               </packing>
             </child>
             <child>
+              <object class="GtkHSeparator" id="hsp2">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">5</property>
+              </packing>
+            </child>
+            <child>
               <object class="GtkButton" id="btnNew">
                 <property name="label">gtk-add</property>
                 <property name="visible">True</property>
@@ -450,7 +472,18 @@
               <packing>
                 <property name="expand">False</property>
                 <property name="fill">True</property>
-                <property name="position">5</property>
+                <property name="position">6</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkHSeparator" id="hsp3">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">7</property>
               </packing>
             </child>
             <child>
@@ -466,13 +499,13 @@
               <packing>
                 <property name="expand">False</property>
                 <property name="fill">True</property>
-                <property name="position">6</property>
+                <property name="position">8</property>
               </packing>
             </child>
           </object>
           <packing>
             <property name="expand">False</property>
-            <property name="fill">True</property>
+            <property name="fill">False</property>
             <property name="position">1</property>
           </packing>
         </child>

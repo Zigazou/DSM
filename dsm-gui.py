@@ -111,6 +111,7 @@ class DSMHandler:
         actions = {True: STOP, False: START}
         action = actions[sdo(ISRUNNING, servers[btntype], site_id, port)]
         sdo(action, servers[btntype], site_id, port)
+        self.refreshSites()
 
     def onWinDsmDelete(self, *args):
         Gtk.main_quit(*args)
