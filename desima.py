@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Create a custom installation of Apache and MySQL for the current user"""
 
-from os.path import expanduser, isdir, isfile, join
+from os.path import expanduser, isdir, isfile, join, splitext
 from os import listdir, mkdir, rmdir, getuid, chmod, devnull, rename
 from stat import S_IREAD, S_IEXEC
 from pwd import getpwuid
@@ -27,9 +27,7 @@ def extract_application(filename, base_dir):
     if result == None:
         return None
 
-    human_name = result.group(1)
-    human_name = human_name.replace('-', ' ')
-    human_name = human_name.replace('_', ' ')
+    human_name = result.group(1).replace('-', ' ').replace('_', ' ')
     human_name = capwords(human_name)
 
     return (human_name, join(base_dir, filename))
@@ -94,8 +92,8 @@ def find_site(identifier):
 
     if len(sites) == 1:
         return sites[0]
-    else:
-        return None
+
+    return None
 
 def generate_configuration(template, values):
     """Replace tags in string with their actual value"""
@@ -160,40 +158,23 @@ def install_mysql(site_id, port, directory_name):
     mkdir(join(directory_name, 'db', 'run'))
     mkdir(join(directory_name, 'db', 'log'))
 
-    pidfile = join(directory_name, 'db', 'run', 'mysqld.pid')
-    logfile = join(directory_name, 'db', 'log', 'mysqld.log')
-
-    # Create MySQL configuration file
     mysql_config_filename = join(directory_name, 'mysql.conf')
-    template_to_file(
-        'mysql.conf.template',
-        mysql_config_filename,
-        [('PORT', port + 2),
-         ('USER', USERNAME),
-         ('DIRECTORY', directory_name),
-         ('ID', port)
-        ],
-        S_IREAD
-    )
-
-    # Install MySQL system tables
-    mysql_install_db = join(BASE, 'bin', 'mysql_install_db')
-
-    check_call(
-        [mysql_install_db, '--defaults-file=' + mysql_config_filename],
-        stdout=DEVNULL
-    )
 
     # Tokens
     tokens = [
         ('MYSQLD', join(BASE, 'bin', 'mysqld')),
         ('MYSQLCONF', mysql_config_filename),
         ('SITE', site_id),
-        ('LOGFILE', logfile),
-        ('PIDFILE', pidfile)
+        ('LOGFILE', join(directory_name, 'db', 'log', 'mysqld.log')),
+        ('PIDFILE', join(directory_name, 'db', 'run', 'mysqld.pid')),
+        ('PORT', port + 2),
+        ('USER', USERNAME),
+        ('DIRECTORY', directory_name),
+        ('ID', port)
     ]
 
     files = [
+        ('mysql.conf.template', 'mysql.conf', S_IREAD),
         ('mysql.start.template', 'db.start', S_IREAD | S_IEXEC),
         ('mysql.stop.template', 'db.stop', S_IREAD | S_IEXEC),
         ('mysql.isrunning.template', 'db.isrunning', S_IREAD | S_IEXEC)
@@ -206,6 +187,14 @@ def install_mysql(site_id, port, directory_name):
             tokens,
             rights
         )
+
+    # Install MySQL system tables
+    mysql_install_db = join(BASE, 'bin', 'mysql_install_db')
+
+    check_call(
+        [mysql_install_db, '--defaults-file=' + mysql_config_filename],
+        stdout=DEVNULL
+    )
 
     create_default_user(site_id, port, mysql_config_filename)
 
@@ -224,8 +213,6 @@ def install_apache2(site_id, port, directory_name):
     rundir = join(serverroot, 'run')
     docdir = join(serverroot, 'doc')
 
-    pidfile = join(rundir, 'apache.pid')
-
     # Create directories
     for directory in [serverroot, logdir, lockdir, rundir, docdir]:
         mkdir(directory)
@@ -239,7 +226,7 @@ def install_apache2(site_id, port, directory_name):
         ('USER', USERNAME),
         ('GROUP', USERNAME),
         ('LOCKDIR', lockdir),
-        ('PIDFILE', pidfile),
+        ('PIDFILE', join(rundir, 'apache.pid')),
         ('LOGDIR', logdir),
         ('SITE', site_id),
         ('APACHECONF', join(directory_name, 'apache2.conf'))
@@ -268,12 +255,10 @@ def install_application(site_id, port, application_file):
     destination = join(site_directory(site_id, port), 'www')
 
     # Identifies the archive type
-    if application_file.endswith('.tar.gz'):
-        (extract, listing) = ('xzf', 'tzf')
-    else:
-        (extract, listing) = ('xjf', 'tjf')
+    arc_type = {'.gz': ('xzf', 'tzf'), '.bz2': ('xjf', 'tjf')}
+    (extract, listing) = arc_type[splitext(application_file)[1]]
 
-    # Get root directory of the application
+    # Get root directory (first line of the listing) of the application
     root_directory = check_output(
         ['tar', listing, application_file],
         universal_newlines=True
@@ -370,7 +355,6 @@ def command_install(args):
 
 def command_line(command_args):
     """Interpret command line"""
-
     commands = {
         'list': command_list,
         'install': command_install,
