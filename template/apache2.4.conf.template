@@ -56,3 +56,8 @@ TraceEnable Off
 	allow from all
 </Directory>
 
+<IfModule mod_python.c>
+    AddHandler mod_python .py
+    PythonHandler mod_python.publisher
+    PythonDebug On
+</IfModule>

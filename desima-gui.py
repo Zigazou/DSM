@@ -49,8 +49,8 @@ class DesimaHandler:
 
         if treeiter != None:
             return model.get(treeiter, 0)[0]
-        else:
-            return None
+
+        return None
     
     def setCurrentSite(self, site_id):
         if site_id == None:
@@ -118,10 +118,33 @@ class DesimaHandler:
     def onWinDesimaDelete(self, *args):
         Gtk.main_quit(*args)
 
-    def onBtnNewClicked(self, button):
-        self.dlgNew.show_all()
+    def validateNewForm(self):
+        site_id = self.entSiteId.get_text()
 
-        # Update list of applications
+        if not is_valid_site_id(site_id):
+            error_dialog(
+                'Invalid Site ID',
+                'Site ID should be of the form [a-zA-Z][a-zA-Z0-9_]{0,23}'
+            )
+            return False
+
+        if find_site(site_id) != None:
+            error_dialog('Invalid Site ID', 'This site already exists !')
+            return False
+
+        return True
+
+    def applyNewForm(self):
+        site_id = self.entSiteId.get_text()
+        application_file = None
+
+        if self.cbtNewApplication.get_active() > 0:
+            active = self.cbtNewApplication.get_active_iter()
+            application_file = self.stoApplication.get(active, 1)[0]
+    
+        install_site(site_id, find_unused_port(), application_file)
+
+    def updateApplicationList(self):
         self.stoApplication.clear()
         self.stoApplication.append(('None', ''))
         for application in list_applications():
@@ -129,32 +152,19 @@ class DesimaHandler:
 
         self.cbtNewApplication.set_active(0)
 
-        while True:
-            rc = self.dlgNew.run()
+    def onBtnNewClicked(self, button):
+        self.dlgNew.show_all()
 
-            if rc == 0:
+        # Update list of applications
+        self.updateApplicationList()
+
+        while True:
+            if self.dlgNew.run() == 0:
                 break
 
-            site_id = self.entSiteId.get_text()
-
-            if not is_valid_site_id(site_id):
-                error_dialog(
-                    'Invalid Site ID',
-                    'Site ID should be of the form [a-zA-Z][a-zA-Z0-9_]{0,23}'
-                )
-                continue
-
-            if find_site(site_id) != None:
-                error_dialog('Invalid Site ID', 'This site already exists !')
-                continue
-
-            application_file = None
-            if self.cbtNewApplication.get_active() > 0:
-                active = self.cbtNewApplication.get_active_iter()
-                application_file = self.stoApplication.get(active, 1)[0]
-        
-            install_site(site_id, find_unused_port(), application_file)
-            break
+            if self.validateNewForm():
+                self.applyNewForm()
+                break
 
         self.dlgNew.hide()
         self.refreshSites()
