@@ -6,7 +6,7 @@ from os import listdir, mkdir, rmdir, getuid, chmod, devnull, rename
 from stat import S_IREAD, S_IEXEC
 from pwd import getpwuid
 from subprocess import check_call, check_output, call, Popen, PIPE
-from sys import argv, exit
+from sys import argv, exit as sysexit
 from re import compile as rcompile
 from string import capwords
 
@@ -23,6 +23,8 @@ VALID_SITE_ID = rcompile(r'^[a-zA-Z]\w{0,23}$')
 APPLICATION_FORMAT = rcompile(r'^(.*)\.(tar\.gz|tar\.bz2)$')
 
 def extract_application(filename, base_dir):
+    """Given an archive filename and a directory, returns a tuple containing
+       a human name for the archive and the absolute path of it."""
     result = APPLICATION_FORMAT.match(filename)
     if result == None:
         return None
@@ -33,7 +35,7 @@ def extract_application(filename, base_dir):
     return (human_name, join(base_dir, filename))
 
 def list_applications():
-    """Return a list of sites"""
+    """Return a list of applications in the application subdirectory."""
     base_dir = join(BASE, 'application')
     return [extract_application(application, base_dir)
             for application in listdir(base_dir)
@@ -42,6 +44,7 @@ def list_applications():
            ]
 
 def is_valid_site_id(site_id):
+    """Check if a site identifier is valid."""
     return VALID_SITE_ID.match(site_id)
 
 def list_sites():
@@ -144,6 +147,7 @@ def create_default_user(site_id, mysql_config_filename):
     sdo(STOP, DB, site_id)
 
 def mysql_log_file(site_id):
+    """Return a list of full path to MySQL log files."""
     directory_name = site_directory(site_id)
     return [join(directory_name, 'db', 'log', 'mysql_error.log')]
 
@@ -196,6 +200,7 @@ def install_mysql(site_id, port, directory_name):
     create_default_user(site_id, mysql_config_filename)
 
 def apache2_log_file(site_id):
+    """Return a list of full path to Apache2 log files."""
     directory_name = site_directory(site_id)
     return [join(directory_name, 'www', 'log', 'apache2_error.log'),
             join(directory_name, 'www', 'log', 'apache2_access.log')]
@@ -247,6 +252,8 @@ def install_apache2(site_id, port, directory_name):
         )
 
 def install_application(site_id, application_file):
+    """Extract contents of an archive into the doc subdirectory of the web
+       server."""
     assert isfile(application_file)
 
     destination = join(site_directory(site_id), 'www')
@@ -295,6 +302,7 @@ def install_site(site_id, port, application_file):
         install_application(site_id, application_file)
 
 def remove_site(site_id):
+    """Completely remove a site after ensuring the servers were stopped."""
     if not is_valid_site_id(site_id):
         raise ValueError('Invalid site ID, must be [a-zA-Z][a-zA-Z0-9_]{0,23}')
 
@@ -315,53 +323,57 @@ def remove_site(site_id):
     check_call(['chmod', '-R', 'u+w', directory_name])
     check_call(['rm', '-Rf', directory_name])
 
-def command_list(args):
-    server_state = { True: 'running', False: 'stopped'}
-    for (site_id, port, www, db) in sites_states():
+def command_list(_):
+    """Show a list of servers and their states to the user."""
+    server_state = {True: 'running', False: 'stopped'}
+    for (site_id, port, www, database) in sites_states():
         print('{id}({port}): www {www}, db {db}'.format(
             id=site_id,
             port=port,
             www=server_state[www],
-            db=server_state[db]
+            db=server_state[database]
         ))
 
 def command_remove(args):
+    """Remove a site specified by the user."""
     if len(args) != 1:
         raise ValueError('The remove command needs a site identifier')
 
     remove_site(args[0])
 
-def command_help(args):
-    help = [
-        'DeSiMa is for Dev Sites Manager: it manages developer’s sites.',
-        '',
-        'It creates Apache2 (2.2 and 2.4) and MySQL instances running as the',
-        'current user. It thus does not require the developer to modify its',
-        'system configuration. The sites created with DSM use port numbers',
-        'between {mini} and {maxi}.'.format(mini=PORT_MIN, maxi=PORT_MAX),
-        '',
-        'DeSiMa contains special code to get around AppArmor limitations on',
-        'MySQL under Ubuntu. It also keeps WWW files and DB files under the',
-        'same directory. It requires Python3 to run.',
-        '',
-        'It is command driven:',
-        '    - help              --> this help',
-        '    - list              --> list all sites and their running states',
-        '    - install <site_id> --> create a new site (HTTP and DB)',
-        '    - remove <site_id>  --> remove a site',
-        '',
-        'WARNING: DeSiMa is for developer’s environment ONLY ! It must not be',
-        '         used in production environment.',
-        ''
+def command_help(_):
+    """Show help to the user."""
+    help_message = [
+        "DeSiMa is for Dev Sites Manager: it manages developer's sites.",
+        "",
+        "It creates Apache2 (2.2 and 2.4) and MySQL instances running as the",
+        "current user. It thus does not require the developer to modify its",
+        "system configuration. The sites created with DSM use port numbers",
+        "between {mini} and {maxi}.".format(mini=PORT_MIN, maxi=PORT_MAX),
+        "",
+        "DeSiMa contains special code to get around AppArmor limitations on",
+        "MySQL under Ubuntu. It also keeps WWW files and DB files under the",
+        "same directory. It requires Python3 to run.",
+        "",
+        "It is command driven:",
+        "    - help              --> this help",
+        "    - list              --> list all sites and their running states",
+        "    - install <site_id> --> create a new site (HTTP and DB)",
+        "    - remove <site_id>  --> remove a site",
+        "",
+        "WARNING: DeSiMa is for developer's environment ONLY! It must not be",
+        "         used in production environment.",
+        ""
     ]
 
-    print('\n'.join(help))
+    print('\n'.join(help_message))
 
 def command_install(args):
+    """Install a new site as specified by the user."""
     if len(args) != 1:
         raise ValueError('The install command needs a new site identifier')
 
-    install_site(args[0], find_unused_port())
+    install_site(args[0], find_unused_port(), None)
 
 def command_line(command_args):
     """Interpret command line"""
@@ -380,9 +392,9 @@ def command_line(command_args):
         commands[command](args)
     except ValueError as err:
         print('ERROR: {message}'.format(message=err.args[0]))
-        exit(1)
+        sysexit(1)
 
 if __name__ == '__main__':
     command_line(argv[1:])
-    exit(0)
+    sysexit(0)
 

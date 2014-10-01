@@ -274,7 +274,7 @@
     <property name="window_position">center-on-parent</property>
     <property name="default_width">700</property>
     <property name="icon">desima-gui.svg</property>
-    <signal name="delete-event" handler="onWinDesimaDelete" swapped="no"/>
+    <signal name="delete-event" handler="on_win_desima_delete" swapped="no"/>
     <child>
       <object class="GtkHBox" id="boxDesima">
         <property name="visible">True</property>
@@ -297,7 +297,7 @@
                 <property name="model">stoSites</property>
                 <property name="rules_hint">True</property>
                 <property name="enable_grid_lines">vertical</property>
-                <signal name="cursor-changed" handler="onTvwSitesCursorChanged" swapped="no"/>
+                <signal name="cursor-changed" handler="on_tvw_sites_cursor_changed" swapped="no"/>
                 <child>
                   <object class="GtkTreeViewColumn" id="tvcSiteId">
                     <property name="resizable">True</property>
@@ -376,7 +376,7 @@
                 <property name="receives_default">True</property>
                 <property name="use_action_appearance">False</property>
                 <property name="use_stock">True</property>
-                <signal name="clicked" handler="onBtnRefreshClicked" swapped="no"/>
+                <signal name="clicked" handler="on_btn_refresh_clicked" swapped="no"/>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -404,7 +404,7 @@
                 <property name="receives_default">True</property>
                 <property name="use_action_appearance">False</property>
                 <property name="image">imgRunWeb</property>
-                <signal name="clicked" handler="onBtnRunClicked" swapped="no"/>
+                <signal name="clicked" handler="on_btn_run_clicked" swapped="no"/>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -421,7 +421,7 @@
                 <property name="receives_default">True</property>
                 <property name="use_action_appearance">False</property>
                 <property name="image">imgRunDB</property>
-                <signal name="clicked" handler="onBtnRunClicked" swapped="no"/>
+                <signal name="clicked" handler="on_btn_run_clicked" swapped="no"/>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -438,7 +438,7 @@
                 <property name="receives_default">True</property>
                 <property name="use_action_appearance">False</property>
                 <property name="image">imgShowLog</property>
-                <signal name="clicked" handler="onBtnShowLog" swapped="no"/>
+                <signal name="clicked" handler="on_btn_show_log" swapped="no"/>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -465,7 +465,7 @@
                 <property name="receives_default">True</property>
                 <property name="use_action_appearance">False</property>
                 <property name="use_stock">True</property>
-                <signal name="clicked" handler="onBtnNewClicked" swapped="no"/>
+                <signal name="clicked" handler="on_btn_new_clicked" swapped="no"/>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -482,7 +482,7 @@
                 <property name="receives_default">True</property>
                 <property name="use_action_appearance">False</property>
                 <property name="use_stock">True</property>
-                <signal name="clicked" handler="onBtnRemoveClicked" swapped="no"/>
+                <signal name="clicked" handler="on_btn_remove_clicked" swapped="no"/>
               </object>
               <packing>
                 <property name="expand">True</property>
@@ -509,7 +509,7 @@
                 <property name="receives_default">True</property>
                 <property name="use_action_appearance">False</property>
                 <property name="use_stock">True</property>
-                <signal name="clicked" handler="onWinDesimaDelete" swapped="no"/>
+                <signal name="clicked" handler="on_win_desima_delete" swapped="no"/>
               </object>
               <packing>
                 <property name="expand">False</property>

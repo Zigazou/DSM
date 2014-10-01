@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+"""Operate a GUI frontend to the desima module"""
 from gi.repository import Gtk
 from os.path import isfile
 from desima import (sites_states, sdo, START, STOP, ISRUNNING, WWW, DB,
@@ -8,6 +9,7 @@ from desima import (sites_states, sdo, START, STOP, ISRUNNING, WWW, DB,
 from subprocess import Popen
 
 def error_dialog(title, message):
+    """Show an error dialog to the user."""
     dialog = Gtk.MessageDialog(
         None,
         Gtk.DialogFlags.MODAL,
@@ -22,6 +24,7 @@ def error_dialog(title, message):
     dialog.destroy()
 
 def confirmation_dialog(question):
+    """Show a confirmation dialog to the user asking for a choice."""
     dialog = Gtk.MessageDialog(
         None,
         Gtk.DialogFlags.MODAL,
@@ -35,81 +38,85 @@ def confirmation_dialog(question):
 
     return response == Gtk.ResponseType.YES
 
-class DesimaHandler:
+class DesimaHandler(object):
+    """Handles every callbacks from the Desima window."""
+
     def __init__(self, builder):
+        """ Get all the needed widgets."""
         self.bld = builder
 
-        self.tvwSites = builder.get_object('tvwSites')
-        self.stoSites = builder.get_object("stoSites")
-        self.imgRunDB = builder.get_object('imgRunDB')
-        self.imgRunWeb = builder.get_object('imgRunWeb')
-        self.imgStopDB = builder.get_object('imgStopDB')
-        self.imgStopWeb = builder.get_object('imgStopWeb')
-        self.btnRunWeb = builder.get_object("btnRunWeb")
-        self.btnRunDB = builder.get_object("btnRunDB")
-        self.btnShowLog = builder.get_object("btnShowLog")
-        self.btnRemove = builder.get_object("btnRemove")
-        self.dlgNew = builder.get_object("dlgNew")
-        self.entSiteId = builder.get_object("entSiteId")
-        self.cbtNewApplication = builder.get_object("cbtNewApplication")
-        self.stoApplication = builder.get_object("stoApplication")
+        self.tvw_sites = builder.get_object('tvwSites')
+        self.sto_sites = builder.get_object("stoSites")
+        self.img_run_db = builder.get_object('imgRunDB')
+        self.img_run_web = builder.get_object('imgRunWeb')
+        self.img_stop_db = builder.get_object('imgStopDB')
+        self.img_stop_web = builder.get_object('imgStopWeb')
+        self.btn_run_web = builder.get_object("btnRunWeb")
+        self.btn_run_db = builder.get_object("btnRunDB")
+        self.btn_show_log = builder.get_object("btnShowLog")
+        self.btn_remove = builder.get_object("btnRemove")
+        self.dlg_new = builder.get_object("dlgNew")
+        self.ent_site_id = builder.get_object("entSiteId")
+        self.cbt_new_application = builder.get_object("cbtNewApplication")
+        self.sto_application = builder.get_object("stoApplication")
 
-        self.initGUI()
+        self.refresh_sites()
 
-    def initGUI(self):
-        self.refreshSites()
-
-    def getCurrentSite(self):
-        selection = self.tvwSites.get_selection()
+    def get_current_site(self):
+        """Return the currently selected site."""
+        selection = self.tvw_sites.get_selection()
         (model, treeiter) = selection.get_selected()
 
         if treeiter != None:
             return model.get(treeiter, 0)[0]
 
         return None
-    
-    def setCurrentSite(self, site_id):
+
+    def set_current_site(self, site_id):
+        """Set the selected site."""
         if site_id == None:
             return
 
         # Search for a site_id in available rows
-        model = self.tvwSites.get_model()
+        model = self.tvw_sites.get_model()
         treeiter = model.get_iter_first()
         while treeiter != None:
             if site_id == model.get_value(treeiter, 0):
-                self.tvwSites.get_selection().select_iter(treeiter)
+                self.tvw_sites.get_selection().select_iter(treeiter)
                 break
 
             treeiter = model.iter_next(treeiter)
 
-        self.onTvwSitesCursorChanged(self.tvwSites)
+        self.on_tvw_sites_cursor_changed(self.tvw_sites)
 
-    def refreshSites(self):
+    def refresh_sites(self):
+        """Refresh the sites list."""
         # Keep track of the current selected item
-        current_site = self.getCurrentSite()
+        current_site = self.get_current_site()
 
         # Prepare data for the rows
-        text = { True: 'running', False: 'stopped' }
+        text = {True: 'running', False: 'stopped'}
         rows = [
             [site_id, int(port), text[www_running], text[db_running]]
             for (site_id, port, www_running, db_running) in sites_states()
         ]
 
         # Update the listview
-        self.stoSites.clear()
+        self.sto_sites.clear()
         for row in rows:
-            self.stoSites.append(row)
+            self.sto_sites.append(row)
 
         # Reselect the previously selected item
-        self.setCurrentSite(current_site)
+        self.set_current_site(current_site)
 
-    def updateRunButton(self, button, btntype, current_state, message):
+    def update_run_button(self, button, btntype, current_state, message):
+        """Update a Run/Stop button."""
         assert current_state in [None, 'stopped', 'running']
         assert btntype in ['Web', 'DB']
 
         messages = {'stopped': 'Run ', 'running': 'Stop '}
-        images = {'stopped': {'Web': self.imgRunWeb, 'DB': self.imgRunDB},
-                  'running': {'Web': self.imgStopWeb, 'DB': self.imgStopDB}}
+        images = {'stopped': {'Web': self.img_run_web, 'DB': self.img_run_db},
+                  'running': {'Web': self.img_stop_web, 'DB': self.img_stop_db}}
 
         if current_state != None:
             button.set_label(messages[current_state] + ' ' + message)
@@ -117,25 +124,29 @@ class DesimaHandler:
 
         button.set_sensitive(current_state != None)
 
-    def updateRunButtons(self, wwwrun, dbrun):
-        self.updateRunButton(self.btnRunWeb, 'Web', wwwrun, 'web server')
-        self.updateRunButton(self.btnRunDB, 'DB', dbrun, 'DB server')
-        self.btnShowLog.set_sensitive(wwwrun != None)
+    def update_run_buttons(self, wwwrun, dbrun):
+        """Update all run buttons."""
+        self.update_run_button(self.btn_run_web, 'Web', wwwrun, 'web server')
+        self.update_run_button(self.btn_run_db, 'DB', dbrun, 'DB server')
+        self.btn_show_log.set_sensitive(wwwrun != None)
 
-    def toggleServer(self, btntype, site_id):
+    def toggle_server(self, btntype, site_id):
+        """Run an action based on a Run/Stop button."""
         assert btntype in ['DB', 'Web']
 
         servers = {'DB': DB, 'Web': WWW}
         actions = {True: STOP, False: START}
         action = actions[sdo(ISRUNNING, servers[btntype], site_id)]
         sdo(action, servers[btntype], site_id)
-        self.refreshSites()
+        self.refresh_sites()
 
-    def onWinDesimaDelete(self, *args):
+    def on_win_desima_delete(self, *args):
+        """Handler for the delete event."""
         Gtk.main_quit(*args)
 
-    def validateNewForm(self):
-        site_id = self.entSiteId.get_text()
+    def validate_new_form(self):
+        """Validate values from the new form."""
+        site_id = self.ent_site_id.get_text()
 
         if not is_valid_site_id(site_id):
             error_dialog(
@@ -150,43 +161,47 @@ class DesimaHandler:
 
         return True
 
-    def applyNewForm(self):
-        site_id = self.entSiteId.get_text()
+    def apply_new_form(self):
+        """Create a new site based on the new form."""
+        site_id = self.ent_site_id.get_text()
         application_file = None
 
-        if self.cbtNewApplication.get_active() > 0:
-            active = self.cbtNewApplication.get_active_iter()
-            application_file = self.stoApplication.get(active, 1)[0]
-    
+        if self.cbt_new_application.get_active() > 0:
+            active = self.cbt_new_application.get_active_iter()
+            application_file = self.sto_application.get(active, 1)[0]
+
         install_site(site_id, find_unused_port(), application_file)
 
-    def updateApplicationList(self):
-        self.stoApplication.clear()
-        self.stoApplication.append(('None', ''))
+    def update_application_list(self):
+        """Update the applications list in the combo box widget."""
+        self.sto_application.clear()
+        self.sto_application.append(('None', ''))
         for application in list_applications():
-            self.stoApplication.append(application)
+            self.sto_application.append(application)
 
-        self.cbtNewApplication.set_active(0)
+        self.cbt_new_application.set_active(0)
 
-    def onBtnNewClicked(self, button):
-        self.dlgNew.show_all()
+    def on_btn_new_clicked(self, _):
+        """Handler when the user clicks on the new button."""
+        self.dlg_new.show_all()
 
         # Update list of applications
-        self.updateApplicationList()
+        self.update_application_list()
 
         while True:
-            if self.dlgNew.run() == 0:
+            if self.dlg_new.run() == 0:
                 break
 
-            if self.validateNewForm():
-                self.applyNewForm()
+            if self.validate_new_form():
+                self.apply_new_form()
                 break
 
-        self.dlgNew.hide()
-        self.refreshSites()
+        self.dlg_new.hide()
+        self.refresh_sites()
 
-    def onBtnRemoveClicked(self, button):
-        (store, treeiter) = self.tvwSites.get_selection().get_selected()
+    def on_btn_remove_clicked(self, _):
+        """Handler when the user clicks on the remove button."""
+        (store, treeiter) = self.tvw_sites.get_selection().get_selected()
 
         if treeiter == None:
             return
@@ -198,13 +213,15 @@ class DesimaHandler:
 
         if confirmation:
             remove_site(site_id)
-            self.refreshSites()
+            self.refresh_sites()
 
-    def onBtnRefreshClicked(self, button):
-        self.refreshSites()
+    def on_btn_refresh_clicked(self, _):
+        """Handler when the user clicks on the refresh button."""
+        self.refresh_sites()
 
-    def onTvwSitesCursorChanged(self, tv):
-        (store, treeiter) = tv.get_selection().get_selected()
+    def on_tvw_sites_cursor_changed(self, treeview):
+        """Handler when the selection of the sites list has changed."""
+        (store, treeiter) = treeview.get_selection().get_selected()
         (wwwrun, dbrun) = (None, None)
 
         # Test if a row is actually selected
@@ -212,23 +229,22 @@ class DesimaHandler:
             wwwrun = store.get_value(treeiter, 2)
             dbrun = store.get_value(treeiter, 3)
 
-        self.btnRemove.set_sensitive(treeiter != None)
-        self.updateRunButtons(wwwrun, dbrun)
+        self.btn_remove.set_sensitive(treeiter != None)
+        self.update_run_buttons(wwwrun, dbrun)
 
-    def onBtnRunClicked(self, button):
-        btntypes = { True: 'Web', False: 'DB' }
+    def on_btn_run_clicked(self, button):
+        """Handler when a run button is clicked."""
+        btntypes = {True: 'Web', False: 'DB'}
         btntype = btntypes[button.get_label().find('web') >= 0]
- 
-        (store, treeiter) = self.tvwSites.get_selection().get_selected()
+
+        (store, treeiter) = self.tvw_sites.get_selection().get_selected()
 
         if treeiter != None:
-            self.toggleServer(btntype, store.get_value(treeiter, 0))
+            self.toggle_server(btntype, store.get_value(treeiter, 0))
 
-    def onBtnShowLog(self, button):
-        btntypes = { True: 'Web', False: 'DB' }
-        btntype = btntypes[button.get_label().find('web') >= 0]
- 
-        (store, treeiter) = self.tvwSites.get_selection().get_selected()
+    def on_btn_show_log(self, _):
+        """Handler when the user clicks on the show log button."""
+        (store, treeiter) = self.tvw_sites.get_selection().get_selected()
 
         if treeiter != None:
             site_id = store.get_value(treeiter, 0)
@@ -237,18 +253,19 @@ class DesimaHandler:
                         if isfile(log)]
             Popen(["gnome-system-log"] + logs)
 
-def main(gladeFile, winID):
+def main(glade_file, win_id):
+    """Setup the window and run !"""
     # Show images on buttons
     settings = Gtk.Settings.get_default()
     settings.props.gtk_button_images = True
 
     # Build the interface
     builder = Gtk.Builder()
-    builder.add_from_file(gladeFile)
+    builder.add_from_file(glade_file)
     builder.connect_signals(DesimaHandler(builder))
 
     # Show the window
-    window = builder.get_object(winID)
+    window = builder.get_object(win_id)
     window.show_all()
 
     Gtk.main()
