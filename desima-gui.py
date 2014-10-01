@@ -201,12 +201,10 @@ class DesimaHandler(object):
 
     def on_btn_remove_clicked(self, _):
         """Handler when the user clicks on the remove button."""
-        (store, treeiter) = self.tvw_sites.get_selection().get_selected()
-
-        if treeiter == None:
+        site_id = self.get_current_site()
+        if site_id == None:
             return
 
-        site_id = store.get_value(treeiter, 0)
         confirmation = confirmation_dialog(
             'Do you really want to remove "{id}" ?'.format(id=site_id)
         )
@@ -234,23 +232,24 @@ class DesimaHandler(object):
 
     def on_btn_run_clicked(self, button):
         """Handler when a run button is clicked."""
-        btntypes = {True: 'Web', False: 'DB'}
-        btntype = btntypes[button.get_label().find('web') >= 0]
+        site_id = self.get_current_site()
 
-        (store, treeiter) = self.tvw_sites.get_selection().get_selected()
-
-        if treeiter != None:
-            self.toggle_server(btntype, store.get_value(treeiter, 0))
+        if site_id != None:
+            btntypes = {True: 'Web', False: 'DB'}
+            btntype = btntypes[button.get_label().find('web') >= 0]
+            self.toggle_server(btntype, site_id)
 
     def on_btn_show_log(self, _):
         """Handler when the user clicks on the show log button."""
-        (store, treeiter) = self.tvw_sites.get_selection().get_selected()
+        site_id = self.get_current_site()
 
-        if treeiter != None:
-            site_id = store.get_value(treeiter, 0)
-            logs = [log for log in mysql_log_file(site_id) +
-                                   apache2_log_file(site_id)
-                        if isfile(log)]
+        if site_id != None:
+            logs = [
+                log
+                for log in mysql_log_file(site_id) + apache2_log_file(site_id)
+                if isfile(log)
+            ]
+
             Popen(["gnome-system-log"] + logs)
 
 def main(glade_file, win_id):
