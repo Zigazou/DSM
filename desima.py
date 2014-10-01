@@ -18,7 +18,7 @@ USERNAME = getpwuid(getuid())[0]
 (START, STOP, ISRUNNING) = ('start', 'stop', 'isrunning')
 (WWW, DB) = ('www', 'db')
 
-SITE_FORMAT = rcompile(r'^site-\w+-\d{4,5}$')
+SITE_FORMAT = rcompile(r'^site-\w+$')
 VALID_SITE_ID = rcompile(r'^[a-zA-Z]\w{0,23}$')
 APPLICATION_FORMAT = rcompile(r'^(.*)\.(tar\.gz|tar\.bz2)$')
 
@@ -46,54 +46,49 @@ def is_valid_site_id(site_id):
 
 def list_sites():
     """Return a list of sites"""
-    return [(entry.split('-')[1], int(entry.split('-')[2]))
+    return [entry.split('-')[1]
             for entry in listdir(BASE)
             if isdir(entry) and SITE_FORMAT.match(entry)]
 
-def site_directory(site_id, port):
+def site_directory(site_id):
     """Returns the full path to a directory site"""
-    return join(BASE, "site-{i}-{p}".format(i=site_id, p=port))
+    return join(BASE, "site-{i}".format(i=site_id))
 
-def sdo(action, server, site_id, port):
+def site_port(site_id):
+    """Returns the port of a site given its site_id"""
+    return int(open(join(site_directory(site_id), 'PORT')).read(1000))
+
+def sdo(action, server, site_id):
     """Execute an action (start, stop, isrunning) script on a server
        (db, www)"""
     assert server in ['db', 'www']
     assert action in ['start', 'stop', 'isrunning']
 
-    return 0 == call([join(
-        site_directory(site_id, port),
-        server + '.' + action
-    )])
+    return 0 == call([join(site_directory(site_id), server + '.' + action)])
 
 def sites_states():
     """Returns a list of sites with their states"""
     return [
         (site_id,
-         port,
-         sdo(ISRUNNING, WWW, site_id, port),
-         sdo(ISRUNNING, DB, site_id, port)
+         site_port(site_id),
+         sdo(ISRUNNING, WWW, site_id),
+         sdo(ISRUNNING, DB, site_id)
         )
-        for (site_id, port) in list_sites()
+        for site_id in list_sites()
     ]
 
 def find_unused_port():
     """Find the first unused port among the authorized ports and the already
        used ports."""
 
-    used_ports = [port for (_, port) in list_sites()]
+    used_ports = [port for (_, port, _, _) in sites_states()]
     port_range = range(PORT_MIN, PORT_MAX, PORT_STEP)
 
     return next(port for port in port_range if port not in used_ports)
 
-def find_site(identifier):
+def find_site(site_id):
     """Find a site given its site_id"""
-    sites = [(site_id, port) for (site_id, port) in list_sites()
-                             if site_id == identifier]
-
-    if len(sites) == 1:
-        return sites[0]
-
-    return None
+    return site_id in list_sites()
 
 def generate_configuration(template, values):
     """Replace tags in string with their actual value"""
@@ -107,9 +102,11 @@ def template_to_file(template, dest, values, mode):
     """Generate a file based on a template and a list of (key, values)"""
     template = join(BASE, 'template', template)
 
-    dest_file = open(dest, 'w')
-    dest_file.write(generate_configuration(open(template).read(65536), values))
-    dest_file.close()
+    with open(dest, 'w') as dest_file:
+        dest_file.write(
+            generate_configuration(open(template).read(65536), values)
+        )
+
     chmod(dest, mode)
 
 def apache_version():
@@ -121,7 +118,7 @@ def apache_version():
     versions = {True: '2.2', False: '2.4'}
     return versions[output.find('Apache/2.2.') >= 0]
 
-def create_default_user(site_id, port, mysql_config_filename):
+def create_default_user(site_id, mysql_config_filename):
     """Create default database with default user"""
     script = "\n".join([
         "CREATE DATABASE {db};",
@@ -131,7 +128,7 @@ def create_default_user(site_id, port, mysql_config_filename):
     ]).format(db=site_id, user=site_id, pwd=site_id)
 
     # Start the server
-    sdo(START, DB, site_id, port)
+    sdo(START, DB, site_id)
 
     # Create the default database
     mysql = Popen(
@@ -144,10 +141,10 @@ def create_default_user(site_id, port, mysql_config_filename):
     mysql.communicate(input=bytes(script, 'ASCII'))
 
     # Stop the server
-    sdo(STOP, DB, site_id, port)
+    sdo(STOP, DB, site_id)
 
-def mysql_log_file(site_id, port):
-    directory_name = site_directory(site_id, port)
+def mysql_log_file(site_id):
+    directory_name = site_directory(site_id)
     return [join(directory_name, 'db', 'log', 'mysql_error.log')]
 
 def install_mysql(site_id, port, directory_name):
@@ -196,10 +193,10 @@ def install_mysql(site_id, port, directory_name):
         stdout=DEVNULL
     )
 
-    create_default_user(site_id, port, mysql_config_filename)
+    create_default_user(site_id, mysql_config_filename)
 
-def apache2_log_file(site_id, port):
-    directory_name = site_directory(site_id, port)
+def apache2_log_file(site_id):
+    directory_name = site_directory(site_id)
     return [join(directory_name, 'www', 'log', 'apache2_error.log'),
             join(directory_name, 'www', 'log', 'apache2_access.log')]
 
@@ -249,10 +246,10 @@ def install_apache2(site_id, port, directory_name):
             rights
         )
 
-def install_application(site_id, port, application_file):
+def install_application(site_id, application_file):
     assert isfile(application_file)
 
-    destination = join(site_directory(site_id, port), 'www')
+    destination = join(site_directory(site_id), 'www')
 
     # Identifies the archive type
     arc_type = {'.gz': ('xzf', 'tzf'), '.bz2': ('xjf', 'tjf')}
@@ -280,28 +277,28 @@ def install_site(site_id, port, application_file):
     if not is_valid_site_id(site_id):
         raise ValueError('Invalid site ID, must be [a-zA-Z][a-zA-Z0-9_]{0,23}')
 
-    site = find_site(site_id)
-
-    if site != None:
+    if find_site(site_id):
         raise ValueError("Site {site} already exists".format(site=site_id))
 
     # Create directory for the new site
-    directory_name = site_directory(site_id, port)
+    directory_name = site_directory(site_id)
     mkdir(directory_name)
+
+    # Create the port file
+    with open(join(directory_name, 'PORT'), 'w') as port_file:
+        port_file.write(str(port))
 
     install_mysql(site_id, port, directory_name)
     install_apache2(site_id, port, directory_name)
 
     if application_file != None:
-        install_application(site_id, port, application_file)
+        install_application(site_id, application_file)
 
 def remove_site(site_id):
     if not is_valid_site_id(site_id):
         raise ValueError('Invalid site ID, must be [a-zA-Z][a-zA-Z0-9_]{0,23}')
 
-    site = find_site(site_id)
-
-    if site == None:
+    if not find_site(site_id):
         raise ValueError("Site {site} unknown".format(site=site_id))
 
     # Stop servers

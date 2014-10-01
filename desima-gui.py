@@ -106,13 +106,13 @@ class DesimaHandler:
         self.updateRunButton(self.btnRunDB, 'DB', dbrun, 'DB server')
         self.btnShowLog.set_sensitive(wwwrun != None)
 
-    def toggleServer(self, btntype, site_id, port):
+    def toggleServer(self, btntype, site_id):
         assert btntype in ['DB', 'Web']
 
         servers = {'DB': DB, 'Web': WWW}
         actions = {True: STOP, False: START}
-        action = actions[sdo(ISRUNNING, servers[btntype], site_id, port)]
-        sdo(action, servers[btntype], site_id, port)
+        action = actions[sdo(ISRUNNING, servers[btntype], site_id)]
+        sdo(action, servers[btntype], site_id)
         self.refreshSites()
 
     def onWinDesimaDelete(self, *args):
@@ -128,7 +128,7 @@ class DesimaHandler:
             )
             return False
 
-        if find_site(site_id) != None:
+        if find_site(site_id):
             error_dialog('Invalid Site ID', 'This site already exists !')
             return False
 
@@ -190,9 +190,7 @@ class DesimaHandler:
         (store, treeiter) = self.tvwSites.get_selection().get_selected()
 
         if treeiter != None:
-            site_id = store.get_value(treeiter, 0)
-            port = store.get_value(treeiter, 1)
-            self.toggleServer(btntype, site_id, port)
+            self.toggleServer(btntype, store.get_value(treeiter, 0))
 
     def onBtnShowLog(self, button):
         btntypes = { True: 'Web', False: 'DB' }
@@ -202,9 +200,8 @@ class DesimaHandler:
 
         if treeiter != None:
             site_id = store.get_value(treeiter, 0)
-            port = store.get_value(treeiter, 1)
-            logs = [log for log in mysql_log_file(site_id, port) +
-                                   apache2_log_file(site_id, port)
+            logs = [log for log in mysql_log_file(site_id) +
+                                   apache2_log_file(site_id)
                         if isfile(log)]
             Popen(["gnome-system-log"] + logs)
 
