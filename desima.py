@@ -302,8 +302,18 @@ def remove_site(site_id):
         raise ValueError("Site {site} unknown".format(site=site_id))
 
     # Stop servers
+    if sdo(ISRUNNING, WWW, site_id):
+        sdo(STOP, WWW, site_id)
+
+    if sdo(ISRUNNING, DB, site_id):
+        sdo(STOP, DB, site_id)
 
     # Delete all files belonging to the site
+    directory_name = site_directory(site_id)
+
+    # Ensures that everything can be deleted inside the directory
+    check_call(['chmod', '-R', 'u+w', directory_name])
+    check_call(['rm', '-Rf', directory_name])
 
 def command_list(args):
     server_state = { True: 'running', False: 'stopped'}
@@ -316,7 +326,10 @@ def command_list(args):
         ))
 
 def command_remove(args):
-    raise NotImplementedError('remove command not implemented')
+    if len(args) != 1:
+        raise ValueError('The remove command needs a site identifier')
+
+    remove_site(args[0])
 
 def command_help(args):
     help = [

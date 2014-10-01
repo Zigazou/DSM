@@ -3,13 +3,14 @@ from gi.repository import Gtk
 from os.path import isfile
 from desima import (sites_states, sdo, START, STOP, ISRUNNING, WWW, DB,
                     is_valid_site_id, find_site, install_site, find_unused_port,
-                    mysql_log_file, apache2_log_file, list_applications)
+                    mysql_log_file, apache2_log_file, list_applications,
+                    remove_site)
 from subprocess import Popen
 
 def error_dialog(title, message):
     dialog = Gtk.MessageDialog(
         None,
-        0,
+        Gtk.DialogFlags.MODAL,
         Gtk.MessageType.ERROR,
         Gtk.ButtonsType.CANCEL,
         title
@@ -19,6 +20,20 @@ def error_dialog(title, message):
     dialog.run()
 
     dialog.destroy()
+
+def confirmation_dialog(question):
+    dialog = Gtk.MessageDialog(
+        None,
+        Gtk.DialogFlags.MODAL,
+        Gtk.MessageType.QUESTION,
+        Gtk.ButtonsType.YES_NO,
+        question
+    )
+
+    response = dialog.run()
+    dialog.destroy()
+
+    return response == Gtk.ResponseType.YES
 
 class DesimaHandler:
     def __init__(self, builder):
@@ -33,6 +48,7 @@ class DesimaHandler:
         self.btnRunWeb = builder.get_object("btnRunWeb")
         self.btnRunDB = builder.get_object("btnRunDB")
         self.btnShowLog = builder.get_object("btnShowLog")
+        self.btnRemove = builder.get_object("btnRemove")
         self.dlgNew = builder.get_object("dlgNew")
         self.entSiteId = builder.get_object("entSiteId")
         self.cbtNewApplication = builder.get_object("cbtNewApplication")
@@ -169,6 +185,21 @@ class DesimaHandler:
         self.dlgNew.hide()
         self.refreshSites()
 
+    def onBtnRemoveClicked(self, button):
+        (store, treeiter) = self.tvwSites.get_selection().get_selected()
+
+        if treeiter == None:
+            return
+
+        site_id = store.get_value(treeiter, 0)
+        confirmation = confirmation_dialog(
+            'Do you really want to remove "{id}" ?'.format(id=site_id)
+        )
+
+        if confirmation:
+            remove_site(site_id)
+            self.refreshSites()
+
     def onBtnRefreshClicked(self, button):
         self.refreshSites()
 
@@ -181,6 +212,7 @@ class DesimaHandler:
             wwwrun = store.get_value(treeiter, 2)
             dbrun = store.get_value(treeiter, 3)
 
+        self.btnRemove.set_sensitive(treeiter != None)
         self.updateRunButtons(wwwrun, dbrun)
 
     def onBtnRunClicked(self, button):
