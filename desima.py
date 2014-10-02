@@ -251,22 +251,40 @@ def install_apache2(site_id, port, directory_name):
             rights
         )
 
+def get_root_directory(application_file):
+    """Detects if the archive has a root directory or not"""
+    # Identifies the archive type
+    arc_type = {'.gz': 'tzf', '.bz2': 'tjf'}
+    listing = arc_type[splitext(application_file)[1]]
+
+    # Get files list of the archive
+    files_list = check_output(
+        ['tar', listing, application_file],
+        universal_newlines=True
+    ).splitlines()
+
+    first_entry = files_list[0]
+
+    for entry in files_list:
+        if not entry.startswith(first_entry):
+            return None
+
+    return first_entry
+
 def install_application(site_id, application_file):
     """Extract contents of an archive into the doc subdirectory of the web
        server."""
     assert isfile(application_file)
 
-    destination = join(site_directory(site_id), 'www')
-
     # Identifies the archive type
-    arc_type = {'.gz': ('xzf', 'tzf'), '.bz2': ('xjf', 'tjf')}
-    (extract, listing) = arc_type[splitext(application_file)[1]]
+    arc_type = {'.gz': 'xzf', '.bz2': 'xjf'}
+    extract = arc_type[splitext(application_file)[1]]
 
-    # Get root directory (first line of the listing) of the application
-    root_directory = check_output(
-        ['tar', listing, application_file],
-        universal_newlines=True
-    ).splitlines()[0]
+    root_directory = get_root_directory(application_file)
+    destination = join(site_directory(site_id), 'www')
+    
+    if root_directory == None:
+        destination = join(destination, 'doc')
 
     # Extract application
     check_call(
@@ -274,10 +292,11 @@ def install_application(site_id, application_file):
         stdout=DEVNULL
     )
 
-    # Move application to the doc directory
-    doc_dir = join(destination, 'doc')
-    rmdir(doc_dir)
-    rename(join(destination, root_directory), doc_dir)
+    if root_directory != None:
+        # Move application to the doc directory
+        doc_dir = join(destination, 'doc')
+        rmdir(doc_dir)
+        rename(join(destination, root_directory), doc_dir)
 
 def install_site(site_id, port, application_file):
     """Create a site with standalone Apache2 and MySQL installation"""
