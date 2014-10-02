@@ -9,6 +9,8 @@ from subprocess import check_call, check_output, call, Popen, PIPE
 from sys import argv, exit as sysexit
 from re import compile as rcompile
 from string import capwords
+from zipfile import is_zipfile, ZipFile
+from tarfile import is_tarfile, open as taropen
 
 DEVNULL = open(devnull, "w")
 BASE = expanduser("~/www")
@@ -20,7 +22,7 @@ USERNAME = getpwuid(getuid())[0]
 
 SITE_FORMAT = rcompile(r'^site-\w+$')
 VALID_SITE_ID = rcompile(r'^[a-zA-Z]\w{0,23}$')
-APPLICATION_FORMAT = rcompile(r'^(.*)\.(tar\.gz|tar\.bz2)$')
+APPLICATION_FORMAT = rcompile(r'^(.*)\.(tar\.gz|tar\.bz2|zip)$')
 
 def extract_application(filename, base_dir):
     """Given an archive filename and a directory, returns a tuple containing
@@ -251,35 +253,39 @@ def install_apache2(site_id, port, directory_name):
             rights
         )
 
-def get_root_directory(application_file):
+def get_root_directory(filename):
     """Detects if the archive has a root directory or not"""
-    # Identifies the archive type
-    arc_type = {'.gz': 'tzf', '.bz2': 'tjf'}
-    listing = arc_type[splitext(application_file)[1]]
+    if is_zipfile(filename):
+        members = [member.filename for member in ZipFile(filename).infolist()]
+    elif is_tarfile(filename):
+        members = [member.name for member in taropen(filename).get_members()]
+    else:
+        return None
 
-    # Get files list of the archive
-    files_list = check_output(
-        ['tar', listing, application_file],
-        universal_newlines=True
-    ).splitlines()
+    root_directory = members[0]
+    if root_directory[-1] != '/':
+        return None
 
-    first_entry = files_list[0]
-
-    for entry in files_list:
-        if not entry.startswith(first_entry):
+    for member in members:
+        if not member.startswith(root_directory):
             return None
 
-    return first_entry
+    return root_directory
 
 def install_application(site_id, application_file):
     """Extract contents of an archive into the doc subdirectory of the web
        server."""
     assert isfile(application_file)
+    assert splitext(application_file)[1] in ['.gz', '.bz2', '.zip']
 
     # Identifies the archive type
-    arc_type = {'.gz': 'xzf', '.bz2': 'xjf'}
-    extract = arc_type[splitext(application_file)[1]]
-
+    arc_types = {
+        '.gz': {'cmd': 'tar', 'opt': 'xzf', 'dest': '--directory'},
+        '.bz2': {'cmd': 'tar', 'opt': 'xjf', 'dest': '--directory'},
+        '.zip': {'cmd': 'unzip', 'opt': '-q', 'dest': '-d'}
+    }
+    
+    arc_type = arc_types[splitext(application_file)[1]]
     root_directory = get_root_directory(application_file)
     destination = join(site_directory(site_id), 'www')
     
@@ -288,7 +294,10 @@ def install_application(site_id, application_file):
 
     # Extract application
     check_call(
-        ['tar', extract, application_file, '--directory', destination],
+        [arc_type['cmd'],
+         arc_type['opt'],
+         application_file,
+         arc_type['dest'], destination],
         stdout=DEVNULL
     )
 
