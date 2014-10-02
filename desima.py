@@ -258,7 +258,7 @@ def get_root_directory(filename):
     if is_zipfile(filename):
         members = [member.filename for member in ZipFile(filename).infolist()]
     elif is_tarfile(filename):
-        members = [member.name for member in taropen(filename).get_members()]
+        members = [member.name for member in taropen(filename).getmembers()]
     else:
         return None
 
@@ -284,11 +284,11 @@ def install_application(site_id, application_file):
         '.bz2': {'cmd': 'tar', 'opt': 'xjf', 'dest': '--directory'},
         '.zip': {'cmd': 'unzip', 'opt': '-q', 'dest': '-d'}
     }
-    
+
     arc_type = arc_types[splitext(application_file)[1]]
     root_directory = get_root_directory(application_file)
     destination = join(site_directory(site_id), 'www')
-    
+
     if root_directory == None:
         destination = join(destination, 'doc')
 
