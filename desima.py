@@ -11,6 +11,7 @@ from re import compile as rcompile
 from string import capwords
 from zipfile import is_zipfile, ZipFile
 from tarfile import is_tarfile, open as taropen
+from string import Template
 
 DEVNULL = open(devnull, "w")
 BASE = expanduser("~/www")
@@ -95,21 +96,13 @@ def find_site(site_id):
     """Find a site given its site_id"""
     return site_id in list_sites()
 
-def generate_configuration(template, values):
-    """Replace tags in string with their actual value"""
-
-    for (key, value) in values:
-        template = template.replace('***{key}***'.format(key=key), str(value))
-
-    return template
-
 def template_to_file(template, dest, values, mode):
     """Generate a file based on a template and a list of (key, values)"""
     template = join(BASE, 'template', template)
 
     with open(dest, 'w') as dest_file:
         dest_file.write(
-            generate_configuration(open(template).read(65536), values)
+            Template(open(template).read(65536)).safe_substitute(values)
         )
 
     chmod(dest, mode)
@@ -125,12 +118,9 @@ def apache_version():
 
 def create_default_user(site_id, mysql_config_filename):
     """Create default database with default user"""
-    script = "\n".join([
-        "CREATE DATABASE {db};",
-        "GRANT ALL ON {db}.* TO {user}@127.0.0.1 IDENTIFIED BY '{pwd}';",
-        "FLUSH PRIVILEGES;",
-        ""
-    ]).format(db=site_id, user=site_id, pwd=site_id)
+    tokens = {'DATABASE': site_id, 'USER': site_id, 'PASSWORD': site_id}
+    template = join(BASE, 'template', 'mysql.create.template')
+    script = Template(open(template).read(65536)).safe_substitute(tokens)
 
     # Start the server
     sdo(START, DB, site_id)
@@ -164,17 +154,17 @@ def install_mysql(site_id, port, directory_name):
     mysql_config_filename = join(directory_name, 'mysql.conf')
 
     # Tokens
-    tokens = [
-        ('MYSQLD', join(BASE, 'bin', 'mysqld')),
-        ('MYSQLCONF', mysql_config_filename),
-        ('SITE', site_id),
-        ('LOGFILE', join(directory_name, 'db', 'log', 'mysqld.log')),
-        ('PIDFILE', join(directory_name, 'db', 'run', 'mysqld.pid')),
-        ('PORT', port + 2),
-        ('USER', USERNAME),
-        ('DIRECTORY', directory_name),
-        ('ID', port)
-    ]
+    tokens = {
+        'MYSQLD': join(BASE, 'bin', 'mysqld'),
+        'MYSQLCONF': mysql_config_filename,
+        'SITE': site_id,
+        'LOGFILE': join(directory_name, 'db', 'log', 'mysqld.log'),
+        'PIDFILE': join(directory_name, 'db', 'run', 'mysqld.pid'),
+        'PORT': port + 2,
+        'USER': USERNAME,
+        'DIRECTORY': directory_name,
+        'ID': port
+    }
 
     files = [
         ('mysql.conf.template', 'mysql.conf', S_IREAD),
@@ -222,19 +212,19 @@ def install_apache2(site_id, port, directory_name):
         mkdir(directory)
 
     # Tokens
-    tokens = [
-        ('SERVERROOT', serverroot),
-        ('SERVERNAME', '{user}-{site}'.format(user=USERNAME, site=site_id)),
-        ('HTTP_PORT', port),
-        ('HTTPS_PORT', port + 1),
-        ('USER', USERNAME),
-        ('GROUP', USERNAME),
-        ('LOCKDIR', lockdir),
-        ('PIDFILE', join(rundir, 'apache.pid')),
-        ('LOGDIR', logdir),
-        ('SITE', site_id),
-        ('APACHECONF', join(directory_name, 'apache2.conf'))
-    ]
+    tokens = {
+        'SERVERROOT': serverroot,
+        'SERVERNAME': '{user}-{site}'.format(user=USERNAME, site=site_id),
+        'HTTP_PORT': port,
+        'HTTPS_PORT': port + 1,
+        'USER': USERNAME,
+        'GROUP': USERNAME,
+        'LOCKDIR': lockdir,
+        'PIDFILE': join(rundir, 'apache.pid'),
+        'LOGDIR': logdir,
+        'SITE': site_id,
+        'APACHECONF': join(directory_name, 'apache2.conf')
+    }
 
     template_filename = 'apache{v}.conf.template'.format(v=apache_version())
 
@@ -260,13 +250,14 @@ def get_root_directory(filename):
     elif is_tarfile(filename):
         members = [member.name for member in taropen(filename).getmembers()]
     else:
+        print('nozipnotar')
         return None
 
     root_directory = members[0]
     if root_directory[-1] != '/':
-        return None
+        root_directory = root_directory + '/'
 
-    for member in members:
+    for member in members[1:]:
         if not member.startswith(root_directory):
             return None
 
@@ -287,10 +278,13 @@ def install_application(site_id, application_file):
 
     arc_type = arc_types[splitext(application_file)[1]]
     root_directory = get_root_directory(application_file)
-    destination = join(site_directory(site_id), 'www')
+    www_dir = join(site_directory(site_id), 'www')
+    doc_dir = join(www_dir, 'doc')
 
     if root_directory == None:
-        destination = join(destination, 'doc')
+        destination = doc_dir
+    else:
+        destination = www_dir
 
     # Extract application
     check_call(
@@ -303,7 +297,6 @@ def install_application(site_id, application_file):
 
     if root_directory != None:
         # Move application to the doc directory
-        doc_dir = join(destination, 'doc')
         rmdir(doc_dir)
         rename(join(destination, root_directory), doc_dir)
 

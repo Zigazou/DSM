@@ -1,19 +1,19 @@
 [client]
-port                   = ***PORT***
-socket                 = ***DIRECTORY***/db/run/mysqld.sock
+port                   = $PORT
+socket                 = $DIRECTORY/db/run/mysqld.sock
 host                   = 127.0.0.1
 
 [mysqld_safe]
-socket                 = ***DIRECTORY***/db/run/mysqld.sock
+socket                 = $DIRECTORY/db/run/mysqld.sock
 nice                   = 0
 
 [mysqld]
-user                   = ***USER***
-pid-file               = ***DIRECTORY***/db/run/mysqld.pid
-socket                 = ***DIRECTORY***/db/run/mysqld.sock
-port                   = ***PORT***
+user                   = $USER
+pid-file               = $DIRECTORY/db/run/mysqld.pid
+socket                 = $DIRECTORY/db/run/mysqld.sock
+port                   = $PORT
 basedir                = /usr
-datadir                = ***DIRECTORY***/db/data
+datadir                = $DIRECTORY/db/data
 tmpdir                 = /tmp
 lc-messages-dir        = /usr/share/mysql
 skip-external-locking
@@ -25,8 +25,8 @@ thread_cache_size      = 8
 myisam-recover-options = BACKUP
 query_cache_limit      = 1M
 query_cache_size       = 16M
-log_error              = ***DIRECTORY***/db/log/mysql_error.log
-server-id              = ***ID***
+log_error              = $DIRECTORY/db/log/mysql_error.log
+server-id              = $ID
 expire_logs_days       = 10
 max_binlog_size        = 100M
 
