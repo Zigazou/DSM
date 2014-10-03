@@ -69,6 +69,7 @@ def sdo(action, server, site_id):
        (db, www)"""
     assert server in ['db', 'www']
     assert action in ['start', 'stop', 'isrunning']
+    assert is_valid_site_id(site_id)
 
     return 0 == call([join(site_directory(site_id), server + '.' + action)])
 
@@ -96,14 +97,14 @@ def find_site(site_id):
     """Find a site given its site_id"""
     return site_id in list_sites()
 
+def get_template(template):
+    """Returns a Template object from a template file in the template dir"""
+    return Template(open(join(BASE, 'template', template)).read(65536))
+
 def template_to_file(template, dest, values, mode):
     """Generate a file based on a template and a list of (key, values)"""
-    template = join(BASE, 'template', template)
-
     with open(dest, 'w') as dest_file:
-        dest_file.write(
-            Template(open(template).read(65536)).safe_substitute(values)
-        )
+        dest_file.write(get_template(template).safe_substitute(values))
 
     chmod(dest, mode)
 
@@ -118,9 +119,10 @@ def apache_version():
 
 def create_default_user(site_id, mysql_config_filename):
     """Create default database with default user"""
+    assert is_valid_site_id(site_id)
+
     tokens = {'DATABASE': site_id, 'USER': site_id, 'PASSWORD': site_id}
-    template = join(BASE, 'template', 'mysql.create.template')
-    script = Template(open(template).read(65536)).safe_substitute(tokens)
+    script = get_template('mysql.create.template').safe_substitute(tokens)
 
     # Start the server
     sdo(START, DB, site_id)
@@ -140,11 +142,14 @@ def create_default_user(site_id, mysql_config_filename):
 
 def mysql_log_file(site_id):
     """Return a list of full path to MySQL log files."""
+    assert is_valid_site_id(site_id)
+
     directory_name = site_directory(site_id)
     return [join(directory_name, 'db', 'log', 'mysql_error.log')]
 
 def install_mysql(site_id, port, directory_name):
     """Create a standalone MySQL installation"""
+    assert is_valid_site_id(site_id)
 
     # Create directories
     mkdir(join(directory_name, 'db'))
@@ -193,12 +198,15 @@ def install_mysql(site_id, port, directory_name):
 
 def apache2_log_file(site_id):
     """Return a list of full path to Apache2 log files."""
+    assert is_valid_site_id(site_id)
+
     directory_name = site_directory(site_id)
     return [join(directory_name, 'www', 'log', 'apache2_error.log'),
             join(directory_name, 'www', 'log', 'apache2_access.log')]
 
 def install_apache2(site_id, port, directory_name):
     """Create a standalone Apache2 installation"""
+    assert is_valid_site_id(site_id)
 
     # Define directories
     serverroot = join(directory_name, 'www')
@@ -250,7 +258,6 @@ def get_root_directory(filename):
     elif is_tarfile(filename):
         members = [member.name for member in taropen(filename).getmembers()]
     else:
-        print('nozipnotar')
         return None
 
     root_directory = members[0]
@@ -268,6 +275,7 @@ def install_application(site_id, application_file):
        server."""
     assert isfile(application_file)
     assert splitext(application_file)[1] in ['.gz', '.bz2', '.zip']
+    assert is_valid_site_id(site_id)
 
     # Identifies the archive type
     arc_types = {
@@ -364,30 +372,13 @@ def command_remove(args):
 
 def command_help(_):
     """Show help to the user."""
-    help_message = [
-        "DeSiMa is for Dev Sites Manager: it manages developer's sites.",
-        "",
-        "It creates Apache2 (2.2 and 2.4) and MySQL instances running as the",
-        "current user. It thus does not require the developer to modify its",
-        "system configuration. The sites created with DSM use port numbers",
-        "between {mini} and {maxi}.".format(mini=PORT_MIN, maxi=PORT_MAX),
-        "",
-        "DeSiMa contains special code to get around AppArmor limitations on",
-        "MySQL under Ubuntu. It also keeps WWW files and DB files under the",
-        "same directory. It requires Python3 to run.",
-        "",
-        "It is command driven:",
-        "    - help              --> this help",
-        "    - list              --> list all sites and their running states",
-        "    - install <site_id> --> create a new site (HTTP and DB)",
-        "    - remove <site_id>  --> remove a site",
-        "",
-        "WARNING: DeSiMa is for developer's environment ONLY! It must not be",
-        "         used in production environment.",
-        ""
-    ]
+    tokens = {
+        'PORTMINI': PORT_MIN,
+        'PORTMAXI': PORT_MAX,
+        'SITEID': VALID_SITE_ID.pattern
+    }
 
-    print('\n'.join(help_message))
+    print(get_template('help.template').safe_substitute(tokens))
 
 def command_install(args):
     """Install a new site as specified by the user."""

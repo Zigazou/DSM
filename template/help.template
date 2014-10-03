@@ -1,0 +1,21 @@
+DeSiMa is for Dev Sites Manager: it manages developer's sites.
+
+It creates Apache2 (2.2 and 2.4) and MySQL instances running as the current
+user. It thus does not require the developer to modify its system configuration.
+The sites created with DSM use port numbers between $PORTMINI and $PORTMAXI.
+
+DeSiMa contains special code to get around AppArmor limitations on MySQL under
+Ubuntu. It also keeps WWW files and DB files under the same directory. It
+requires Python3 to run.
+
+It is command driven:
+    - help              --> this help
+    - list              --> list all sites and their running states
+    - install <site_id> --> create a new site (HTTP and DB)
+    - remove <site_id>  --> remove a site
+
+The site_id must obey this regular expression: $SITEID
+
+WARNING: DeSiMa is for developer's environment ONLY! It must not be
+         used in production environment.
+
