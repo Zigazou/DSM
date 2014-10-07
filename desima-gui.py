@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 """Operate a GUI frontend to the desima module"""
+from os import geteuid
 from gi.repository import Gtk
 from os.path import isfile
 from desima import (sites_states, sdo, START, STOP, ISRUNNING, WWW, DB,
@@ -284,5 +285,11 @@ def main(glade_file, win_id):
     Gtk.main()
 
 if __name__ == '__main__':
-    main("desima-gui.glade", "winDesima")
+    if geteuid() == 0:
+        error_dialog(
+            "Running as root !",
+            "DeSiMa must be run as standard user, not as root"
+        )
+    else:
+        main("desima-gui.glade", "winDesima")
 

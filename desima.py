@@ -3,7 +3,7 @@
 
 from os.path import expanduser, isdir, isfile, join, splitext, dirname
 from os import (listdir, mkdir, rmdir, getuid, chmod, devnull, rename, X_OK,
-                environ, pathsep)
+                environ, pathsep, geteuid)
 from stat import S_IREAD, S_IEXEC
 from pwd import getpwuid
 from subprocess import check_call, check_output, call, Popen, PIPE
@@ -548,6 +548,10 @@ def command_line(command_args):
         sysexit(1)
 
 if __name__ == '__main__':
-    command_line(argv[1:])
-    sysexit(0)
+    if geteuid() == 0:
+        print("DeSiMa must be run as standard user, not as root")
+        sysexit(1)
+    else:
+        command_line(argv[1:])
+        sysexit(0)
 
