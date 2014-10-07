@@ -8,6 +8,14 @@ from desima import (sites_states, sdo, START, STOP, ISRUNNING, WWW, DB,
                     list_applications, remove_site)
 from subprocess import Popen
 
+def get_combobox_value(combobox, default):
+    """Return the currently active value of a combobox."""
+    if combobox.get_active() > 0:
+        active = combobox.get_active_iter()
+        return combobox.get_model().get(active, 1)[0]
+    else:
+        return default
+
 def error_dialog(title, message):
     """Show an error dialog to the user."""
     dialog = Gtk.MessageDialog(
@@ -58,6 +66,8 @@ class DesimaHandler(object):
         self.dlg_new = builder.get_object("dlgNew")
         self.ent_site_id = builder.get_object("entSiteId")
         self.cbt_new_application = builder.get_object("cbtNewApplication")
+        self.cbt_new_web_server = builder.get_object("cbtNewWebServer")
+        self.cbt_new_db_server = builder.get_object("cbtNewDbServer")
         self.sto_application = builder.get_object("stoApplication")
 
         self.refresh_sites()
@@ -164,17 +174,15 @@ class DesimaHandler(object):
     def apply_new_form(self):
         """Create a new site based on the new form."""
         site_id = self.ent_site_id.get_text()
-        application_file = None
-
-        if self.cbt_new_application.get_active() > 0:
-            active = self.cbt_new_application.get_active_iter()
-            application_file = self.sto_application.get(active, 1)[0]
+        www_server = get_combobox_value(self.cbt_new_web_server, 'apache2')
+        db_server = get_combobox_value(self.cbt_new_db_server, 'mysql')
+        application_file = get_combobox_value(self.cbt_new_application, None)
 
         site_install(
             site_id,
             find_unused_port(),
-            'apache2',
-            'mysql',
+            www_server,
+            db_server,
             application_file
         )
 

@@ -2,7 +2,8 @@
 """Create a custom installation of Apache and MySQL for the current user"""
 
 from os.path import expanduser, isdir, isfile, join, splitext, dirname
-from os import listdir, mkdir, rmdir, getuid, chmod, devnull, rename
+from os import (listdir, mkdir, rmdir, getuid, chmod, devnull, rename, X_OK,
+                environ, pathsep)
 from stat import S_IREAD, S_IEXEC
 from pwd import getpwuid
 from subprocess import check_call, check_output, call, Popen, PIPE
@@ -51,6 +52,17 @@ def list_applications():
 def is_valid_site_id(site_id):
     """Check if a site identifier is valid."""
     return VALID_SITE_ID.match(site_id)
+
+def get_bin_directory(executable, hints):
+    """Try to find the directory of an executable event if it's not in PATH."""
+    bin_paths = environ["PATH"].split(pathsep)
+    full_paths = [glob(join(path, executable)) for path in bin_paths + hints]
+    founds = list(chain(*full_paths))
+
+    if not founds:
+        return None
+    else:
+        return dirname(founds[0])
 
 def list_sites():
     """Return a list of sites"""
@@ -210,24 +222,15 @@ def mysql_install(site_id, port, directory_name):
     mysql_create_user(site_id, mysql_config_filename)
 
 def pgsql_bin_directory():
-    guesses = [
-        '/usr/local/pgsql/bin',
-        '/usr/local/bin',
-        '/usr/bin',
-        '/usr/lib/postgresql/*/bin',
-        '/opt/pgsql-*/bin',
-        '/Library/PostgreSQL/*',
-        '/Applications/Postgres.app/Contents/MacOS/bin',
-        '/opt/local/lib/postgresql*/bin',
-    ]
-
-    globs = [glob(join(guess, 'postgres')) for guess in guesses]
-    founds = list(chain(*globs))
-
-    if len(founds) == 0:
-        return None
-    else:
-        return dirname(founds[0])
+    return get_bin_directory(
+        'postgres',
+        ['/usr/local/pgsql/bin',
+         '/usr/lib/postgresql/*/bin',
+         '/opt/pgsql-*/bin',
+         '/Library/PostgreSQL/*',
+         '/Applications/Postgres.app/Contents/MacOS/bin',
+         '/opt/local/lib/postgresql*/bin']
+    )
 
 def pgsql_create_user(site_id, pgsql_config_filename):
     """Create default database with default user"""
@@ -310,6 +313,9 @@ def pgsql_install(site_id, port, directory_name):
 
     #pgsql_create_user(site_id, pgsql_config_filename)
 
+def apache2_bin_directory():
+    return get_bin_directory('apache2', ['/usr/sbin'])
+
 def apache2_log_file(site_id):
     """Return a list of full path to Apache2 log files."""
     assert is_valid_site_id(site_id)
@@ -335,6 +341,7 @@ def apache2_install(site_id, port, directory_name):
 
     # Tokens
     tokens = {
+        'DAEMON': join(apache2_bin_directory(), 'apache2'),
         'SERVERROOT': serverroot,
         'SERVERNAME': '{user}-{site}'.format(user=USERNAME, site=site_id),
         'HTTP_PORT': port,

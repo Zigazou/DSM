@@ -237,10 +237,17 @@
     <columns>
       <!-- column-name dbserver -->
       <column type="gchararray"/>
+      <!-- column-name dbid -->
+      <column type="gchararray"/>
     </columns>
     <data>
       <row>
         <col id="0" translatable="yes">MySQL</col>
+        <col id="1">mysql</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">PostgreSQL</col>
+        <col id="1">pgsql</col>
       </row>
     </data>
   </object>
@@ -260,10 +267,13 @@
     <columns>
       <!-- column-name webserver -->
       <column type="gchararray"/>
+      <!-- column-name wwwid -->
+      <column type="gchararray"/>
     </columns>
     <data>
       <row>
         <col id="0" translatable="yes">Apache2</col>
+        <col id="1">apache2</col>
       </row>
     </data>
   </object>
