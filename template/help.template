@@ -11,7 +11,8 @@ requires Python3 to run.
 It is command driven:
     - help              --> this help
     - list              --> list all sites and their running states
-    - install <site_id> --> create a new site (HTTP and DB)
+    - install <site_id> 'apache2' <'mysql'|'pgsql'> [application]
+                        --> create a new site (HTTP and DB)
     - remove <site_id>  --> remove a site
 
 The site_id must obey this regular expression: $SITEID

@@ -1,0 +1,5 @@
+#!/bin/bash
+apache2 -f "$CONFPATH" -k start
+for loop in {1..30}; do [ -f "$PIDPATH" ] && break; sleep 0.5; done
+notify-send --expire-time=1500 --icon=list-add "$SITE - Apache2 started"
+

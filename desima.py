@@ -1,17 +1,19 @@
 #!/usr/bin/env python3
 """Create a custom installation of Apache and MySQL for the current user"""
 
-from os.path import expanduser, isdir, isfile, join, splitext
+from os.path import expanduser, isdir, isfile, join, splitext, dirname
 from os import listdir, mkdir, rmdir, getuid, chmod, devnull, rename
 from stat import S_IREAD, S_IEXEC
 from pwd import getpwuid
 from subprocess import check_call, check_output, call, Popen, PIPE
+from glob import glob
 from sys import argv, exit as sysexit
 from re import compile as rcompile
 from string import capwords
 from zipfile import is_zipfile, ZipFile
 from tarfile import is_tarfile, open as taropen
 from string import Template
+from itertools import chain
 
 DEVNULL = open(devnull, "w")
 BASE = expanduser("~/www")
@@ -108,6 +110,15 @@ def template_to_file(template, dest, values, mode):
 
     chmod(dest, mode)
 
+def templates_to_files(files, tokens, directory_name):
+    for (template, destination, rights) in files:
+        template_to_file(
+            template,
+            join(directory_name, destination),
+            tokens,
+            rights
+        )
+
 def apache_version():
     """Return the Apache version (2.2 configuration is slightly different from
        2.4 configuration)
@@ -117,12 +128,12 @@ def apache_version():
     versions = {True: '2.2', False: '2.4'}
     return versions[output.find('Apache/2.2.') >= 0]
 
-def create_default_user(site_id, mysql_config_filename):
+def mysql_create_user(site_id, mysql_config_filename):
     """Create default database with default user"""
     assert is_valid_site_id(site_id)
 
     tokens = {'DATABASE': site_id, 'USER': site_id, 'PASSWORD': site_id}
-    script = get_template('mysql.create.template').safe_substitute(tokens)
+    script = get_template('mysql/create.template').safe_substitute(tokens)
 
     # Start the server
     sdo(START, DB, site_id)
@@ -147,44 +158,46 @@ def mysql_log_file(site_id):
     directory_name = site_directory(site_id)
     return [join(directory_name, 'db', 'log', 'mysql_error.log')]
 
-def install_mysql(site_id, port, directory_name):
+def mysql_install(site_id, port, directory_name):
     """Create a standalone MySQL installation"""
     assert is_valid_site_id(site_id)
 
-    # Create directories
-    mkdir(join(directory_name, 'db'))
-    mkdir(join(directory_name, 'db', 'run'))
-    mkdir(join(directory_name, 'db', 'log'))
-
+    dbdir = join(directory_name, 'db')
+    logdir = join(dbdir, 'log')
+    rundir = join(dbdir, 'run')
+    datadir = join(dbdir, 'data')
     mysql_config_filename = join(directory_name, 'mysql.conf')
+
+    # Create directories
+    for directory in (dbdir, rundir, logdir, datadir):
+        mkdir(directory)
 
     # Tokens
     tokens = {
-        'MYSQLD': join(BASE, 'bin', 'mysqld'),
-        'MYSQLCONF': mysql_config_filename,
+        'DAEMON': join(BASE, 'bin', 'mysqld'),
+        'CONFPATH': mysql_config_filename,
         'SITE': site_id,
-        'LOGFILE': join(directory_name, 'db', 'log', 'mysqld.log'),
-        'PIDFILE': join(directory_name, 'db', 'run', 'mysqld.pid'),
+        'LOGDIR': logdir,
+        'LOGFILE': 'mysql_error.log',
+        'LOGPATH': join(logdir, 'mysql_error.log'),
+        'SOCKPATH': join(rundir, 'mysqld.sock'),
+        'PIDPATH': join(rundir, 'mysqld.pid'),
+        'DATADIR': datadir,
         'PORT': port + 2,
         'USER': USERNAME,
+        'DBDIR' : dbdir,
         'DIRECTORY': directory_name,
         'ID': port
     }
 
     files = [
-        ('mysql.conf.template', 'mysql.conf', S_IREAD),
-        ('mysql.start.template', 'db.start', S_IREAD | S_IEXEC),
-        ('mysql.stop.template', 'db.stop', S_IREAD | S_IEXEC),
-        ('mysql.isrunning.template', 'db.isrunning', S_IREAD | S_IEXEC)
+        ('mysql/conf.template', 'mysql.conf', S_IREAD),
+        ('mysql/start.template', 'db.start', S_IREAD | S_IEXEC),
+        ('mysql/stop.template', 'db.stop', S_IREAD | S_IEXEC),
+        ('mysql/isrunning.template', 'db.isrunning', S_IREAD | S_IEXEC)
     ]
 
-    for (template, destination, rights) in files:
-        template_to_file(
-            template,
-            join(directory_name, destination),
-            tokens,
-            rights
-        )
+    templates_to_files(files, tokens, directory_name)
 
     # Install MySQL system tables
     mysql_install_db = join(BASE, 'bin', 'mysql_install_db')
@@ -194,7 +207,108 @@ def install_mysql(site_id, port, directory_name):
         stdout=DEVNULL
     )
 
-    create_default_user(site_id, mysql_config_filename)
+    mysql_create_user(site_id, mysql_config_filename)
+
+def pgsql_bin_directory():
+    guesses = [
+        '/usr/local/pgsql/bin',
+        '/usr/local/bin',
+        '/usr/bin',
+        '/usr/lib/postgresql/*/bin',
+        '/opt/pgsql-*/bin',
+        '/Library/PostgreSQL/*',
+        '/Applications/Postgres.app/Contents/MacOS/bin',
+        '/opt/local/lib/postgresql*/bin',
+    ]
+
+    globs = [glob(join(guess, 'postgres')) for guess in guesses]
+    founds = list(chain(*globs))
+
+    if len(founds) == 0:
+        return None
+    else:
+        return dirname(founds[0])
+
+def pgsql_create_user(site_id, pgsql_config_filename):
+    """Create default database with default user"""
+    assert is_valid_site_id(site_id)
+
+    tokens = {'DATABASE': site_id, 'USER': site_id, 'PASSWORD': site_id}
+    script = get_template('pgsql/create.template').safe_substitute(tokens)
+
+    # Start the server
+    sdo(START, DB, site_id)
+
+    # Create the default database
+    pgsql = Popen(
+        ['psql', '--defaults-file=' + pgsql_config_filename, '--user=root'],
+        stdout=DEVNULL,
+        stdin=PIPE,
+        stderr=DEVNULL
+    )
+
+    pgsql.communicate(input=bytes(script, 'ASCII'))
+
+    # Stop the server
+    sdo(STOP, DB, site_id)
+
+def pgsql_install(site_id, port, directory_name):
+    """Create a standalone MySQL installation"""
+    assert is_valid_site_id(site_id)
+
+    pgsql_bin_dir = pgsql_bin_directory()
+    if pgsql_bin_dir == None:
+        return
+
+    dbdir = join(directory_name, 'db')
+    logdir = join(dbdir, 'log')
+    rundir = join(dbdir, 'run')
+    datadir = join(dbdir, 'data')
+    pgsql_config_filename = join(directory_name, 'pgsql.conf')
+
+    # Create directories
+    for directory in (dbdir, rundir, logdir, datadir):
+        mkdir(directory)
+
+    # Tokens
+    tokens = {
+        'DAEMON': join(pgsql_bin_dir, 'postgres'),
+        'CONFPATH': pgsql_config_filename,
+        'SITE': site_id,
+        'RUNDIR': rundir,
+        'LOGDIR': logdir,
+        'LOGFILE': 'pgsql_error.log',
+        'LOGPATH': join(logdir, 'pgsql_error.log'),
+        'SOCKPATH': join(rundir, 'pgsqld.sock'),
+        'PIDPATH': join(rundir, 'pgsqld.pid'),
+        'DATADIR': datadir,
+        'PORT': port + 2,
+        'USER': USERNAME,
+        'DBDIR' : dbdir,
+        'DIRECTORY': directory_name,
+        'ID': port
+    }
+
+    # Install MySQL system tables
+    check_call(
+        [join(pgsql_bin_dir, 'initdb'),
+         '--pgdata=' + datadir,
+         '--username=' + USERNAME],
+        stdout=DEVNULL
+    )
+
+    files = [
+        ('pgsql/conf.template', 'db/data/postgresql.conf', S_IREAD),
+        ('pgsql/pg_ident.conf.template', 'db/data/pg_ident.conf', S_IREAD),
+        ('pgsql/pg_hba.conf.template', 'db/data/pg_hba.conf', S_IREAD),
+        ('pgsql/start.template', 'db.start', S_IREAD | S_IEXEC),
+        ('pgsql/stop.template', 'db.stop', S_IREAD | S_IEXEC),
+        ('pgsql/isrunning.template', 'db.isrunning', S_IREAD | S_IEXEC)
+    ]
+
+    templates_to_files(files, tokens, directory_name)
+
+    #pgsql_create_user(site_id, pgsql_config_filename)
 
 def apache2_log_file(site_id):
     """Return a list of full path to Apache2 log files."""
@@ -204,7 +318,7 @@ def apache2_log_file(site_id):
     return [join(directory_name, 'www', 'log', 'apache2_error.log'),
             join(directory_name, 'www', 'log', 'apache2_access.log')]
 
-def install_apache2(site_id, port, directory_name):
+def apache2_install(site_id, port, directory_name):
     """Create a standalone Apache2 installation"""
     assert is_valid_site_id(site_id)
 
@@ -228,28 +342,25 @@ def install_apache2(site_id, port, directory_name):
         'USER': USERNAME,
         'GROUP': USERNAME,
         'LOCKDIR': lockdir,
-        'PIDFILE': join(rundir, 'apache.pid'),
+        'LOCKFILE': 'accept.lock',
+        'PIDPATH': join(rundir, 'apache.pid'),
         'LOGDIR': logdir,
+        'ERRLOGFILE': 'apache2_error.log',
+        'ACCLOGFILE': 'apache2_access.log',
         'SITE': site_id,
-        'APACHECONF': join(directory_name, 'apache2.conf')
+        'CONFPATH': join(directory_name, 'apache2.conf')
     }
 
-    template_filename = 'apache{v}.conf.template'.format(v=apache_version())
+    template_filename = 'apache2/{v}.conf.template'.format(v=apache_version())
 
     files = [
         (template_filename, 'apache2.conf', S_IREAD),
-        ('apache2.start.template', 'www.start', S_IREAD | S_IEXEC),
-        ('apache2.stop.template', 'www.stop', S_IREAD | S_IEXEC),
-        ('apache2.isrunning.template', 'www.isrunning', S_IREAD | S_IEXEC)
+        ('apache2/start.template', 'www.start', S_IREAD | S_IEXEC),
+        ('apache2/stop.template', 'www.stop', S_IREAD | S_IEXEC),
+        ('apache2/isrunning.template', 'www.isrunning', S_IREAD | S_IEXEC)
     ]
 
-    for (template, destination, rights) in files:
-        template_to_file(
-            template,
-            join(directory_name, destination),
-            tokens,
-            rights
-        )
+    templates_to_files(files, tokens, directory_name)
 
 def get_root_directory(filename):
     """Detects if the archive has a root directory or not"""
@@ -270,7 +381,7 @@ def get_root_directory(filename):
 
     return root_directory
 
-def install_application(site_id, application_file):
+def application_install(site_id, application_file):
     """Extract contents of an archive into the doc subdirectory of the web
        server."""
     assert isfile(application_file)
@@ -308,8 +419,11 @@ def install_application(site_id, application_file):
         rmdir(doc_dir)
         rename(join(destination, root_directory), doc_dir)
 
-def install_site(site_id, port, application_file):
+def site_install(site_id, port, www_type, db_type, application_file):
     """Create a site with standalone Apache2 and MySQL installation"""
+    assert db_type in ['mysql', 'pgsql']
+    assert www_type in ['apache2']
+
     if not is_valid_site_id(site_id):
         raise ValueError('Invalid site ID, must be [a-zA-Z][a-zA-Z0-9_]{0,23}')
 
@@ -324,11 +438,21 @@ def install_site(site_id, port, application_file):
     with open(join(directory_name, 'PORT'), 'w') as port_file:
         port_file.write(str(port))
 
-    install_mysql(site_id, port, directory_name)
-    install_apache2(site_id, port, directory_name)
+    # Select the specified database and www server
+    db_install = {
+        'mysql': mysql_install,
+        'pgsql': pgsql_install
+    }[db_type]
+
+    www_install = {
+        'apache2': apache2_install
+    }[www_type]
+
+    db_install(site_id, port, directory_name)
+    www_install(site_id, port, directory_name)
 
     if application_file != None:
-        install_application(site_id, application_file)
+        application_install(site_id, application_file)
 
 def remove_site(site_id):
     """Completely remove a site after ensuring the servers were stopped."""
@@ -382,10 +506,20 @@ def command_help(_):
 
 def command_install(args):
     """Install a new site as specified by the user."""
-    if len(args) != 1:
+    if len(args) < 3 or len(args) > 4:
         raise ValueError('The install command needs a new site identifier')
 
-    install_site(args[0], find_unused_port(), None)
+    application_file = None
+    if len(args) == 4:
+        application_file = args[3]
+
+    site_install(
+        args[0],
+        find_unused_port(),
+        args[1],
+        args[2],
+        application_file
+    )
 
 def command_line(command_args):
     """Interpret command line"""

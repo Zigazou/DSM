@@ -2,7 +2,7 @@ ServerName "$SERVERNAME"
 ServerRoot "$SERVERROOT"
 DocumentRoot "$SERVERROOT/doc"
 Mutex file:$LOCKDIR default
-PidFile "$PIDFILE"
+PidFile "$PIDPATH"
 Timeout 300
 KeepAlive On
 MaxKeepAliveRequests 100
@@ -10,7 +10,7 @@ KeepAliveTimeout 5
 User "$USER"
 Group "$GROUP"
 HostnameLookups Off
-ErrorLog "$LOGDIR/apache2_error.log"
+ErrorLog "$LOGDIR/$ERRLOGFILE"
 LogLevel warn
 
 IncludeOptional /etc/apache2/mods-enabled/*.load
@@ -42,7 +42,7 @@ LogFormat "%h %l %u %t \"%r\" %>s %O \"%{Referer}i\" \"%{User-Agent}i\"" combine
 LogFormat "%h %l %u %t \"%r\" %>s %O" common
 LogFormat "%{Referer}i -> %U" referer
 LogFormat "%{User-agent}i" agent
-CustomLog "$LOGDIR/apache2_access.log" combined
+CustomLog "$LOGDIR/$ACCLOGFILE" combined
 
 AddDefaultCharset UTF-8
 ServerTokens Minimal

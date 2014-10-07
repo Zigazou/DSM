@@ -1,5 +1,0 @@
-#!/bin/bash
-nohup "$MYSQLD" --defaults-file="$MYSQLCONF" > "$LOGFILE" 2>&1 &
-for loop in {1..30}; do [ -f "$PIDFILE" ] && break; sleep 0.5; done
-notify-send --expire-time=1500 --icon=list-add "$SITE - MySQL started"
-

@@ -3,9 +3,9 @@
 from gi.repository import Gtk
 from os.path import isfile
 from desima import (sites_states, sdo, START, STOP, ISRUNNING, WWW, DB,
-                    is_valid_site_id, find_site, install_site, find_unused_port,
-                    mysql_log_file, apache2_log_file, list_applications,
-                    remove_site)
+                    is_valid_site_id, find_site, site_install,
+                    find_unused_port, mysql_log_file, apache2_log_file,
+                    list_applications, remove_site)
 from subprocess import Popen
 
 def error_dialog(title, message):
@@ -170,7 +170,13 @@ class DesimaHandler(object):
             active = self.cbt_new_application.get_active_iter()
             application_file = self.sto_application.get(active, 1)[0]
 
-        install_site(site_id, find_unused_port(), application_file)
+        site_install(
+            site_id,
+            find_unused_port(),
+            'apache2',
+            'mysql',
+            application_file
+        )
 
     def update_application_list(self):
         """Update the applications list in the combo box widget."""
