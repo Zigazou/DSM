@@ -2,7 +2,7 @@
 <interface>
   <!-- interface-requires gtk+ 3.0 -->
   <!-- interface-naming-policy toplevel-contextual -->
-  <object class="GtkDialog" id="dlgNew">
+  <object class="GtkDialog" id="dlg_new">
     <property name="can_focus">False</property>
     <property name="border_width">10</property>
     <property name="title" translatable="yes">Add a new site</property>
@@ -11,15 +11,15 @@
     <property name="destroy_with_parent">True</property>
     <property name="type_hint">dialog</property>
     <child internal-child="vbox">
-      <object class="GtkVBox" id="vbxNew">
+      <object class="GtkVBox" id="vbx_new">
         <property name="can_focus">False</property>
         <property name="spacing">2</property>
         <child internal-child="action_area">
-          <object class="GtkHButtonBox" id="actNew">
+          <object class="GtkHButtonBox" id="act_new">
             <property name="can_focus">False</property>
             <property name="layout_style">end</property>
             <child>
-              <object class="GtkButton" id="btnAdd">
+              <object class="GtkButton" id="btn_add">
                 <property name="label">gtk-add</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
@@ -34,7 +34,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkButton" id="btnCancel">
+              <object class="GtkButton" id="btn_cancel">
                 <property name="label">gtk-cancel</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
@@ -57,26 +57,26 @@
           </packing>
         </child>
         <child>
-          <object class="GtkFrame" id="frmAdd">
+          <object class="GtkFrame" id="frm_add">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="label_xalign">0</property>
             <child>
-              <object class="GtkTable" id="grdForm">
+              <object class="GtkTable" id="grd_form">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="border_width">10</property>
                 <property name="column_spacing">10</property>
                 <property name="row_spacing">5</property>
                 <child>
-                  <object class="GtkLabel" id="lblSiteId">
+                  <object class="GtkLabel" id="lbl_site_id">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="label" translatable="yes">Site ID</property>
                   </object>
                 </child>
                 <child>
-                  <object class="GtkLabel" id="lblApplication">
+                  <object class="GtkLabel" id="lbl_application">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="label" translatable="yes">Application</property>
@@ -86,7 +86,7 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkLabel" id="lblWebServer">
+                  <object class="GtkLabel" id="lbl_web_server">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="label" translatable="yes">Web server</property>
@@ -96,7 +96,7 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkLabel" id="lblDbServer">
+                  <object class="GtkLabel" id="lbl_db_server">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="label" translatable="yes">DB server</property>
@@ -106,14 +106,14 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkComboBox" id="cbtNewApplication">
+                  <object class="GtkComboBox" id="cbt_new_application">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="model">stoApplication</property>
+                    <property name="model">sto_application</property>
                     <property name="active">0</property>
                     <property name="entry_text_column">0</property>
                     <child>
-                      <object class="GtkCellRendererText" id="crtNewApplication"/>
+                      <object class="GtkCellRendererText" id="crt_new_application"/>
                       <attributes>
                         <attribute name="text">0</attribute>
                       </attributes>
@@ -125,14 +125,14 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkComboBox" id="cbtNewWebServer">
+                  <object class="GtkComboBox" id="cbt_new_web_server">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="model">stoWebServer</property>
+                    <property name="model">sto_web_server</property>
                     <property name="active">0</property>
                     <property name="entry_text_column">0</property>
                     <child>
-                      <object class="GtkCellRendererText" id="crtNewWebServer"/>
+                      <object class="GtkCellRendererText" id="crt_new_web_server"/>
                       <attributes>
                         <attribute name="text">0</attribute>
                       </attributes>
@@ -144,14 +144,14 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkComboBox" id="cbtNewDbServer">
+                  <object class="GtkComboBox" id="cbt_new_db_server">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="model">stoDbServer</property>
+                    <property name="model">sto_db_server</property>
                     <property name="active">0</property>
                     <property name="entry_text_column">0</property>
                     <child>
-                      <object class="GtkCellRendererText" id="crtNewDbServer"/>
+                      <object class="GtkCellRendererText" id="crt_new_db_server"/>
                       <attributes>
                         <attribute name="text">0</attribute>
                       </attributes>
@@ -163,7 +163,7 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkEntry" id="entSiteId">
+                  <object class="GtkEntry" id="ent_site_id">
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="invisible_char">•</property>
@@ -179,7 +179,7 @@
               </object>
             </child>
             <child type="label">
-              <object class="GtkLabel" id="lblAdd">
+              <object class="GtkLabel" id="lbl_add">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">&lt;b&gt;Add new site&lt;/b&gt;</property>
@@ -196,36 +196,36 @@
       </object>
     </child>
     <action-widgets>
-      <action-widget response="1">btnAdd</action-widget>
-      <action-widget response="0">btnCancel</action-widget>
+      <action-widget response="1">btn_add</action-widget>
+      <action-widget response="0">btn_cancel</action-widget>
     </action-widgets>
   </object>
-  <object class="GtkImage" id="imgRunDB">
+  <object class="GtkImage" id="img_run_db">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
     <property name="stock">gtk-media-play</property>
   </object>
-  <object class="GtkImage" id="imgRunWeb">
+  <object class="GtkImage" id="img_run_web">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
     <property name="stock">gtk-media-play</property>
   </object>
-  <object class="GtkImage" id="imgShowLog">
+  <object class="GtkImage" id="img_show_log">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
     <property name="stock">gtk-info</property>
   </object>
-  <object class="GtkImage" id="imgStopDB">
+  <object class="GtkImage" id="img_stop_db">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
     <property name="stock">gtk-media-stop</property>
   </object>
-  <object class="GtkImage" id="imgStopWeb">
+  <object class="GtkImage" id="img_stop_web">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
     <property name="stock">gtk-media-stop</property>
   </object>
-  <object class="GtkListStore" id="stoApplication">
+  <object class="GtkListStore" id="sto_application">
     <columns>
       <!-- column-name application -->
       <column type="gchararray"/>
@@ -233,7 +233,7 @@
       <column type="gchararray"/>
     </columns>
   </object>
-  <object class="GtkListStore" id="stoDbServer">
+  <object class="GtkListStore" id="sto_db_server">
     <columns>
       <!-- column-name dbserver -->
       <column type="gchararray"/>
@@ -251,7 +251,7 @@
       </row>
     </data>
   </object>
-  <object class="GtkListStore" id="stoSites">
+  <object class="GtkListStore" id="sto_sites">
     <columns>
       <!-- column-name tvcSiteId -->
       <column type="gchararray"/>
@@ -263,7 +263,7 @@
       <column type="gchararray"/>
     </columns>
   </object>
-  <object class="GtkListStore" id="stoWebServer">
+  <object class="GtkListStore" id="sto_web_server">
     <columns>
       <!-- column-name webserver -->
       <column type="gchararray"/>
@@ -277,7 +277,7 @@
       </row>
     </data>
   </object>
-  <object class="GtkWindow" id="winDesima">
+  <object class="GtkWindow" id="win_desima">
     <property name="can_focus">False</property>
     <property name="border_width">10</property>
     <property name="title" translatable="yes">Dev Sites Manager</property>
@@ -286,36 +286,36 @@
     <property name="icon">desima-gui.svg</property>
     <signal name="delete-event" handler="on_win_desima_delete" swapped="no"/>
     <child>
-      <object class="GtkHBox" id="boxDesima">
+      <object class="GtkHBox" id="box_desima">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="spacing">10</property>
         <child>
-          <object class="GtkScrolledWindow" id="scwSites">
+          <object class="GtkScrolledWindow" id="scw_sites">
             <property name="height_request">200</property>
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <property name="border_width">1</property>
             <property name="shadow_type">in</property>
             <child>
-              <object class="GtkTreeView" id="tvwSites">
+              <object class="GtkTreeView" id="tvw_sites">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="can_default">True</property>
                 <property name="has_default">True</property>
                 <property name="border_width">10</property>
-                <property name="model">stoSites</property>
+                <property name="model">sto_sites</property>
                 <property name="rules_hint">True</property>
                 <property name="enable_grid_lines">vertical</property>
                 <signal name="cursor-changed" handler="on_tvw_sites_cursor_changed" swapped="no"/>
                 <child>
-                  <object class="GtkTreeViewColumn" id="tvcSiteId">
+                  <object class="GtkTreeViewColumn" id="tvc_site_id">
                     <property name="resizable">True</property>
                     <property name="sizing">autosize</property>
                     <property name="title" translatable="yes">Site ID</property>
                     <property name="sort_column_id">0</property>
                     <child>
-                      <object class="GtkCellRendererText" id="crtSiteId"/>
+                      <object class="GtkCellRendererText" id="crt_site_id"/>
                       <attributes>
                         <attribute name="text">0</attribute>
                       </attributes>
@@ -323,13 +323,13 @@
                   </object>
                 </child>
                 <child>
-                  <object class="GtkTreeViewColumn" id="tvcPort">
+                  <object class="GtkTreeViewColumn" id="tvc_port">
                     <property name="resizable">True</property>
                     <property name="sizing">autosize</property>
                     <property name="title" translatable="yes">Port</property>
                     <property name="sort_column_id">1</property>
                     <child>
-                      <object class="GtkCellRendererText" id="crtPort"/>
+                      <object class="GtkCellRendererText" id="crt_port"/>
                       <attributes>
                         <attribute name="text">1</attribute>
                       </attributes>
@@ -337,13 +337,13 @@
                   </object>
                 </child>
                 <child>
-                  <object class="GtkTreeViewColumn" id="tvcWebServer">
+                  <object class="GtkTreeViewColumn" id="tvc_web_server">
                     <property name="resizable">True</property>
                     <property name="sizing">autosize</property>
                     <property name="title" translatable="yes">Web server</property>
                     <property name="sort_column_id">2</property>
                     <child>
-                      <object class="GtkCellRendererText" id="crtWebServer"/>
+                      <object class="GtkCellRendererText" id="crt_web_server"/>
                       <attributes>
                         <attribute name="text">2</attribute>
                       </attributes>
@@ -351,13 +351,13 @@
                   </object>
                 </child>
                 <child>
-                  <object class="GtkTreeViewColumn" id="tvcDbServer">
+                  <object class="GtkTreeViewColumn" id="tvc_db_server">
                     <property name="resizable">True</property>
                     <property name="sizing">autosize</property>
                     <property name="title" translatable="yes">DB server</property>
                     <property name="sort_column_id">3</property>
                     <child>
-                      <object class="GtkCellRendererText" id="crtDbServer"/>
+                      <object class="GtkCellRendererText" id="crt_db_server"/>
                       <attributes>
                         <attribute name="text">3</attribute>
                       </attributes>
@@ -374,12 +374,12 @@
           </packing>
         </child>
         <child>
-          <object class="GtkVBox" id="boxButtons">
+          <object class="GtkVBox" id="box_buttons">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="spacing">10</property>
             <child>
-              <object class="GtkButton" id="btnRefresh">
+              <object class="GtkButton" id="btn_refresh">
                 <property name="label">gtk-refresh</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
@@ -406,14 +406,14 @@
               </packing>
             </child>
             <child>
-              <object class="GtkButton" id="btnRunWeb">
+              <object class="GtkButton" id="btn_run_web">
                 <property name="label" translatable="yes">Run web server</property>
                 <property name="visible">True</property>
                 <property name="sensitive">False</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
                 <property name="use_action_appearance">False</property>
-                <property name="image">imgRunWeb</property>
+                <property name="image">img_run_web</property>
                 <signal name="clicked" handler="on_btn_run_clicked" swapped="no"/>
               </object>
               <packing>
@@ -423,14 +423,14 @@
               </packing>
             </child>
             <child>
-              <object class="GtkButton" id="btnRunDB">
+              <object class="GtkButton" id="btn_run_db">
                 <property name="label" translatable="yes">Run DB server</property>
                 <property name="visible">True</property>
                 <property name="sensitive">False</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
                 <property name="use_action_appearance">False</property>
-                <property name="image">imgRunDB</property>
+                <property name="image">img_run_db</property>
                 <signal name="clicked" handler="on_btn_run_clicked" swapped="no"/>
               </object>
               <packing>
@@ -440,14 +440,14 @@
               </packing>
             </child>
             <child>
-              <object class="GtkButton" id="btnShowLog">
+              <object class="GtkButton" id="btn_show_log">
                 <property name="label" translatable="yes">Show logs</property>
                 <property name="visible">True</property>
                 <property name="sensitive">False</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
                 <property name="use_action_appearance">False</property>
-                <property name="image">imgShowLog</property>
+                <property name="image">img_show_log</property>
                 <signal name="clicked" handler="on_btn_show_log" swapped="no"/>
               </object>
               <packing>
@@ -468,7 +468,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkButton" id="btnNew">
+              <object class="GtkButton" id="btn_new">
                 <property name="label">gtk-add</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
@@ -484,7 +484,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkButton" id="btnRemove">
+              <object class="GtkButton" id="btn_remove">
                 <property name="label">gtk-delete</property>
                 <property name="visible">True</property>
                 <property name="sensitive">False</property>
@@ -512,7 +512,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkButton" id="btnQuit">
+              <object class="GtkButton" id="btn_quit">
                 <property name="label">gtk-quit</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>

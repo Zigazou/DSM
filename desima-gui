@@ -11,7 +11,6 @@ from desima.apache2 import apache2_log_file
 from desima.mysql import mysql_log_file
 from desima.site import remove_site, site_install
 
-
 def get_combobox_value(combobox, default):
     """Return the currently active value of a combobox."""
     if combobox.get_active() > 0:
@@ -55,24 +54,16 @@ class DesimaHandler(object):
 
     def __init__(self, builder):
         """ Get all the needed widgets."""
-        self.bld = builder
+        widgets = [
+            'tvw_sites', 'sto_sites', 'img_run_db', 'img_run_web',
+            'img_stop_db', 'img_stop_web', 'btn_run_web', 'btn_run_db',
+            'btn_show_log', 'btn_remove', 'dlg_new', 'ent_site_id',
+            'cbt_new_application', 'cbt_new_web_server', 'cbt_new_db_server',
+            'sto_application'
+        ]
 
-        self.tvw_sites = builder.get_object('tvwSites')
-        self.sto_sites = builder.get_object("stoSites")
-        self.img_run_db = builder.get_object('imgRunDB')
-        self.img_run_web = builder.get_object('imgRunWeb')
-        self.img_stop_db = builder.get_object('imgStopDB')
-        self.img_stop_web = builder.get_object('imgStopWeb')
-        self.btn_run_web = builder.get_object("btnRunWeb")
-        self.btn_run_db = builder.get_object("btnRunDB")
-        self.btn_show_log = builder.get_object("btnShowLog")
-        self.btn_remove = builder.get_object("btnRemove")
-        self.dlg_new = builder.get_object("dlgNew")
-        self.ent_site_id = builder.get_object("entSiteId")
-        self.cbt_new_application = builder.get_object("cbtNewApplication")
-        self.cbt_new_web_server = builder.get_object("cbtNewWebServer")
-        self.cbt_new_db_server = builder.get_object("cbtNewDbServer")
-        self.sto_application = builder.get_object("stoApplication")
+        for widget in widgets:
+            self.__dict__[widget] = builder.get_object(widget)
 
         self.refresh_sites()
 
@@ -129,8 +120,10 @@ class DesimaHandler(object):
         assert btntype in ['Web', 'DB']
 
         messages = {'stopped': 'Run ', 'running': 'Stop '}
-        images = {'stopped': {'Web': self.img_run_web, 'DB': self.img_run_db},
-                  'running': {'Web': self.img_stop_web, 'DB': self.img_stop_db}}
+        images = {
+            'stopped': {'Web': self.img_run_web, 'DB': self.img_run_db},
+            'running': {'Web': self.img_stop_web, 'DB': self.img_stop_db}
+        }
 
         if current_state != None:
             button.set_label(messages[current_state] + ' ' + message)
@@ -294,5 +287,5 @@ if __name__ == '__main__':
             "DeSiMa must be run as standard user, not as root"
         )
     else:
-        main("gui/desima-gui.glade", "winDesima")
+        main("gui/desima-gui.glade", "win_desima")
 
