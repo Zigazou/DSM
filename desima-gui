@@ -294,5 +294,5 @@ if __name__ == '__main__':
             "DeSiMa must be run as standard user, not as root"
         )
     else:
-        main("desima-gui.glade", "winDesima")
+        main("gui/desima-gui.glade", "winDesima")
 
