@@ -1,0 +1,80 @@
+#!/usr/bin/env python3
+"""Create a custom installation of Apache and MySQL for the current user"""
+from os import geteuid
+from sys import argv, exit as sysexit
+from desima.utils import (PORT_MIN, PORT_MAX, VALID_SITE_ID, sites_states,
+                          find_unused_port, get_template)
+from desima.site import remove_site, site_install
+
+def command_list(_):
+    """Show a list of servers and their states to the user."""
+    server_state = {True: 'running', False: 'stopped'}
+    for (site_id, port, www, database) in sites_states():
+        print('{id}({port}): www {www}, db {db}'.format(
+            id=site_id,
+            port=port,
+            www=server_state[www],
+            db=server_state[database]
+        ))
+
+def command_remove(args):
+    """Remove a site specified by the user."""
+    if len(args) != 1:
+        raise ValueError('The remove command needs a site identifier')
+
+    remove_site(args[0])
+
+def command_help(_):
+    """Show help to the user."""
+    tokens = {
+        'PORTMINI': PORT_MIN,
+        'PORTMAXI': PORT_MAX,
+        'SITEID': VALID_SITE_ID.pattern
+    }
+
+    print(get_template('help.template').safe_substitute(tokens))
+
+def command_install(args):
+    """Install a new site as specified by the user."""
+    if len(args) < 3 or len(args) > 4:
+        raise ValueError('The install command needs a new site identifier')
+
+    application_file = None
+    if len(args) == 4:
+        application_file = args[3]
+
+    site_install(
+        args[0],
+        find_unused_port(),
+        args[1],
+        args[2],
+        application_file
+    )
+
+def command_line(command_args):
+    """Interpret command line"""
+    commands = {
+        'list': command_list,
+        'install': command_install,
+        'remove': command_remove,
+        'help': command_help
+    }
+
+    (command, args) = ('help', [])
+    if len(command_args) >= 1 and command_args[0] in commands:
+        (command, args) = (command_args[0], command_args[1:])
+
+    try:
+        commands[command](args)
+    except ValueError as err:
+        print('ERROR: {message}'.format(message=err.args[0]))
+        sysexit(1)
+
+if __name__ == '__main__':
+    if geteuid() == 0:
+        print("DeSiMa must be run as standard user, not as root")
+        sysexit(1)
+    else:
+        command_line(argv[1:])
+        sysexit(0)
+

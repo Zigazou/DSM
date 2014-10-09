@@ -3,11 +3,14 @@
 from os import geteuid
 from gi.repository import Gtk
 from os.path import isfile
-from desima import (sites_states, sdo, START, STOP, ISRUNNING, WWW, DB,
-                    is_valid_site_id, find_site, site_install,
-                    find_unused_port, mysql_log_file, apache2_log_file,
-                    list_applications, remove_site)
 from subprocess import Popen
+from desima.utils import (sites_states, sdo, START, STOP, ISRUNNING, WWW, DB,
+                          is_valid_site_id, find_site, find_unused_port)
+from desima.application import list_applications
+from desima.apache2 import apache2_log_file
+from desima.mysql import mysql_log_file
+from desima.site import remove_site, site_install
+
 
 def get_combobox_value(combobox, default):
     """Return the currently active value of a combobox."""
