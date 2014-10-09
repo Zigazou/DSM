@@ -53,6 +53,10 @@ def is_valid_site_id(site_id):
     """Check if a site identifier is valid."""
     return VALID_SITE_ID.match(site_id)
 
+def bash_prelude():
+    """Returns the full path to the Bash prelude script."""
+    return join(BASE, 'bin', 'bashprelude')
+
 def get_bin_directory(executable, hints):
     """Try to find the directory of an executable event if it's not in PATH."""
     bin_paths = environ["PATH"].split(pathsep)
@@ -123,6 +127,7 @@ def template_to_file(template, dest, values, mode):
     chmod(dest, mode)
 
 def templates_to_files(files, tokens, directory_name):
+    tokens['BASHPRELUDE'] = bash_prelude()
     for (template, destination, rights) in files:
         template_to_file(
             template,

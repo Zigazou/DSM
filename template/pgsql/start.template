@@ -1,5 +1,12 @@
 #!/bin/bash
+source "$BASHPRELUDE"
+
 nohup "$DAEMON" -D "$DATADIR" > "$LOGPATH" 2>&1 &
-for loop in {1..30}; do [ -f "$PIDPATH" ] && break; sleep 0.5; done
-notify-send --expire-time=1500 --icon=list-add "$SITE - PostGreSQL started"
+
+waitfor 5 [ -f "$PIDPATH" ] || exit 2
+
+maybe notify-send \
+    --expire-time=1500 \
+    --icon=list-add \
+    "$SITE - PostGreSQL started"
 
