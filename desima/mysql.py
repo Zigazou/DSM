@@ -72,7 +72,7 @@ def mysql_install(site_id, port, directory_name):
     }
 
     rewr = S_IRUSR | S_IWUSR
-    rewx = rewr | S_XUSR
+    rewx = rewr | S_IXUSR
 
     files = [
         ('mysql/conf.template', 'mysql.conf', rewr),

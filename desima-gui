@@ -49,6 +49,7 @@ def confirmation_dialog(question):
 
     return response == Gtk.ResponseType.YES
 
+# pylint: disable=no-member
 class DesimaHandler(object):
     """Handles every callbacks from the Desima window."""
 

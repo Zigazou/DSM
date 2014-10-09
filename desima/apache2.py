@@ -67,7 +67,7 @@ def apache2_install(site_id, port, directory_name):
     template_filename = 'apache2/{v}.conf.template'.format(v=apache_version())
 
     rewr = S_IRUSR | S_IWUSR
-    rewx = rewr | S_XUSR
+    rewx = rewr | S_IXUSR
 
     files = [
         (template_filename, 'apache2.conf', rewr),
