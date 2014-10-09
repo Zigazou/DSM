@@ -3,7 +3,7 @@
 
 from os.path import join
 from os import mkdir
-from stat import S_IREAD, S_IEXEC
+from stat import S_IRUSR, S_IXUSR, S_IWUSR
 from subprocess import check_call, Popen, PIPE
 
 from .utils import (is_valid_site_id, get_template, sdo, START, DB, DEVNULL,
@@ -66,13 +66,16 @@ def pgsql_install(site_id, port, directory_name):
         stdout=DEVNULL
     )
 
+    rewr = S_IRUSR | S_IWUSR
+    rewx = rewr | S_XUSR
+
     files = [
-        ('pgsql/conf.template', 'db/data/postgresql.conf', S_IREAD),
-        ('pgsql/pg_ident.conf.template', 'db/data/pg_ident.conf', S_IREAD),
-        ('pgsql/pg_hba.conf.template', 'db/data/pg_hba.conf', S_IREAD),
-        ('pgsql/start.template', 'db.start', S_IREAD | S_IEXEC),
-        ('pgsql/stop.template', 'db.stop', S_IREAD | S_IEXEC),
-        ('pgsql/isrunning.template', 'db.isrunning', S_IREAD | S_IEXEC)
+        ('pgsql/conf.template', 'db/data/postgresql.conf', rewr),
+        ('pgsql/pg_ident.conf.template', 'db/data/pg_ident.conf', rewr),
+        ('pgsql/pg_hba.conf.template', 'db/data/pg_hba.conf', rewr),
+        ('pgsql/start.template', 'db.start', rewx),
+        ('pgsql/stop.template', 'db.stop', rewx),
+        ('pgsql/isrunning.template', 'db.isrunning', rewx)
     ]
 
     templates_to_files(files, tokens, directory_name)

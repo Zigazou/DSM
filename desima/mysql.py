@@ -3,7 +3,7 @@
 
 from os.path import join
 from os import mkdir
-from stat import S_IREAD, S_IEXEC
+from stat import S_IRUSR, S_IWUSR, S_IXUSR
 from subprocess import check_call, Popen, PIPE
 
 from .utils import (is_valid_site_id, get_template, sdo, START, DB, DEVNULL,
@@ -71,11 +71,14 @@ def mysql_install(site_id, port, directory_name):
         'ID': port
     }
 
+    rewr = S_IRUSR | S_IWUSR
+    rewx = rewr | S_XUSR
+
     files = [
-        ('mysql/conf.template', 'mysql.conf', S_IREAD),
-        ('mysql/start.template', 'db.start', S_IREAD | S_IEXEC),
-        ('mysql/stop.template', 'db.stop', S_IREAD | S_IEXEC),
-        ('mysql/isrunning.template', 'db.isrunning', S_IREAD | S_IEXEC)
+        ('mysql/conf.template', 'mysql.conf', rewr),
+        ('mysql/start.template', 'db.start', rewx),
+        ('mysql/stop.template', 'db.stop', rewx),
+        ('mysql/isrunning.template', 'db.isrunning', rewx)
     ]
 
     templates_to_files(files, tokens, directory_name)

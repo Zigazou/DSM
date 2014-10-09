@@ -3,7 +3,7 @@
 
 from os.path import join
 from os import mkdir
-from stat import S_IREAD, S_IEXEC
+from stat import S_IRUSR, S_IWUSR, S_IXUSR
 from subprocess import check_output
 
 from .utils import (get_bin_directory, is_valid_site_id, site_directory,
@@ -66,11 +66,14 @@ def apache2_install(site_id, port, directory_name):
 
     template_filename = 'apache2/{v}.conf.template'.format(v=apache_version())
 
+    rewr = S_IRUSR | S_IWUSR
+    rewx = rewr | S_XUSR
+
     files = [
-        (template_filename, 'apache2.conf', S_IREAD),
-        ('apache2/start.template', 'www.start', S_IREAD | S_IEXEC),
-        ('apache2/stop.template', 'www.stop', S_IREAD | S_IEXEC),
-        ('apache2/isrunning.template', 'www.isrunning', S_IREAD | S_IEXEC)
+        (template_filename, 'apache2.conf', rewr),
+        ('apache2/start.template', 'www.start', rewx),
+        ('apache2/stop.template', 'www.stop', rewx),
+        ('apache2/isrunning.template', 'www.isrunning', rewx)
     ]
 
     templates_to_files(files, tokens, directory_name)
