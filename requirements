@@ -1,24 +1,81 @@
 #!/bin/bash
+# Define terminal escape sequences
 ERR=$(printf "setaf 1\nbold\n" | tput -S 2> /dev/null)
 NORM=$(tput sgr0 2> /dev/null)
 
-function check {
-    local message="$1" state="OK"
-    shift
+function try {
+    local message="$1" stateok="$2" stateko="$3" state
+    state="$stateok"
+    shift 3
     "$@" > /dev/null 2> /dev/null
-    [ $? -ne 0 ] && state="${ERR}FAIL${NORM}"
+    [ $? -ne 0 ] && state="$stateko"
     printf "%-24s %s\n" "$message" "$state"
 }
 
-check "MySQL daemon"        test -x /usr/sbin/mysqld
-check "MySQL installer"     test -x /usr/bin/mysql_install_db
-check "Python 3"            which python3
-check "Python 3 subprocess" python3 -c "import subprocess"
-check "Python 3 os"         python3 -c "import os"
-check "Python 3 os.path"    python3 -c "import os.path"
-check "Python 3 pwd"        python3 -c "import pwd"
-check "Notify-send"         which notify-send
-check "Apache2"             which apache2
-check "Apache2 modules"     test -d /etc/apache2/mods-enabled
-check "Gnome System Log"    which gnome-system-log
+function must {
+    local message="$1"
+    shift
+    try "MUST: $message" "OK" "${ERR}FAIL${NORM}" "$@"
+}
+
+function may {
+    local message="$1"
+    shift
+    try "MAY:  $message" "OK" "NO" "$@"
+}
+
+function has_apache_module {
+    local module_name="$1_module"
+    apache2ctl -M | grep --quiet "$module_name"
+}
+
+function has_php_module {
+    local module_name="$1.ini"
+    test -f "/etc/php5/mods-available/$module_name"
+}
+
+function get_bin_directory {
+    local executable="$1" fullpath
+    shift
+
+    fullpath=$(which "$executable")
+    if [ "$fullpath" != "" ]
+    then
+        printf "%s" "$fullpath"
+        return 0
+    fi
+
+    while [ $# -gt 0 ]
+    do
+        fullpath="$1/$executable"
+        if [ -x "$fullpath" ]
+        then
+            printf "%s" "$fullpath"
+            return 0
+        fi
+
+        shift        
+    done
+
+    return 1
+}
+
+must "Python 3"            which python3
+may  "Notify-send"         which notify-send
+must "Apache2"             which apache2
+may  "Apache2 PHP5"        has_apache_module php5
+may  "Apache2 Python"      has_apache_module python
+may  "Gnome System Log"    which gnome-system-log
+may  "MySQL daemon"        test -x /usr/sbin/mysqld
+may  "MySQL installer"     test -x /usr/bin/mysql_install_db
+may  "PostgreSQL client"   which psql
+may  "PostgreSQL daemon"   get_bin_directory postgres \
+                                /usr/local/pgsql/bin \
+                                /usr/lib/postgresql/*/bin \
+                                /opt/pgsql-*/bin \
+                                /Library/PostgreSQL/* \
+                                /Applications/Postgres.app/Contents/MacOS/bin \
+                                /opt/local/lib/postgresql*/bin
+may  "PHP5 MySQL"          has_php_module mysql
+may  "PHP5 PostgreSQL"     has_php_module pgsql
 

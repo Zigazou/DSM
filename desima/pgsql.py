@@ -4,11 +4,21 @@
 from os.path import join
 from os import mkdir
 from stat import S_IRUSR, S_IXUSR, S_IWUSR
-from subprocess import check_call, Popen, PIPE
+from subprocess import check_call, Popen, PIPE, check_output
 
 from .utils import (is_valid_site_id, get_template, sdo, START, DB, DEVNULL,
                     STOP, USERNAME, templates_to_files, get_bin_directory,
                     site_port)
+
+def pgsql_version():
+    """Return the PostgreSQL version (9.2 configuration is slightly different
+       from 9.3 configuration)
+    """
+    postgres = join(pgsql_bin_directory(), 'postgres')
+    output = str(check_output([postgres, '--version']))
+
+    versions = {True: '9.2', False: '9.3'}
+    return versions[output.find('9.2.') >= 0]
 
 def pgsql_bin_directory():
     """Return PostgreSQL bin directory"""
@@ -100,8 +110,10 @@ def pgsql_install(site_id, port, directory_name):
     rewr = S_IRUSR | S_IWUSR
     rewx = rewr | S_IXUSR
 
+    template_filename = 'pgsql/{v}.conf.template'.format(v=pgsql_version())
+
     files = [
-        ('pgsql/conf.template', 'db/data/postgresql.conf', rewr),
+        (template_filename, 'db/data/postgresql.conf', rewr),
         ('pgsql/pg_ident.conf.template', 'db/data/pg_ident.conf', rewr),
         ('pgsql/pg_hba.conf.template', 'db/data/pg_hba.conf', rewr),
         ('pgsql/start.template', 'db.start', rewx),
