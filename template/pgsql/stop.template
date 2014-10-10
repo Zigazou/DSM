@@ -1,9 +1,11 @@
 #!/bin/bash
 source "$BASHPRELUDE"
 
-kill $(cat $PIDPATH)
+pid=$(cat "$PIDPATH")
+kill $pid
 
-waitfor 5 [ ! -f "$PIDPATH" ] || exit 2
+waitfor 5 not kill -0 $pid 2> /dev/null || exit 2
+rm "$PIDPATH"
 
 maybe notify-send \
     --expire-time=1500 \

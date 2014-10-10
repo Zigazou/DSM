@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Create a custom installation of Apache and MySQL for the current user"""
+"""Create a custom installation of Apache and PostgreSQL for the current user"""
 
 from os.path import join
 from os import mkdir
@@ -7,7 +7,8 @@ from stat import S_IRUSR, S_IXUSR, S_IWUSR
 from subprocess import check_call, Popen, PIPE
 
 from .utils import (is_valid_site_id, get_template, sdo, START, DB, DEVNULL,
-                    STOP, USERNAME, templates_to_files, get_bin_directory)
+                    STOP, USERNAME, templates_to_files, get_bin_directory,
+                    site_port)
 
 def pgsql_bin_directory():
     """Return PostgreSQL bin directory"""
@@ -21,8 +22,38 @@ def pgsql_bin_directory():
          '/opt/local/lib/postgresql*/bin']
     )
 
+def pgsql_create_user(site_id):
+    """Create default database with default user"""
+    assert is_valid_site_id(site_id)
+
+    port = site_port(site_id)
+    tokens = {'DATABASE': site_id, 'USER': site_id, 'PASSWORD': site_id}
+    script = get_template('pgsql/create.template').safe_substitute(tokens)
+
+    # Start the server
+    sdo(START, DB, site_id)
+
+    # Create the default database
+    # --dbname=template1 is a trick to connect to an empty PostgreSQL database
+    # allowing us to then create our database.
+    pgsql = Popen(
+        ['psql',
+         '--port=' + str(port),
+         '--host=127.0.0.1'
+         '--no-password',
+         '--dbname=template1'],
+        stdout=DEVNULL,
+        stdin=PIPE,
+        stderr=DEVNULL
+    )
+
+    pgsql.communicate(input=bytes(script, 'ASCII'))
+
+    # Stop the server
+    sdo(STOP, DB, site_id)
+
 def pgsql_install(site_id, port, directory_name):
-    """Create a standalone MySQL installation"""
+    """Create a standalone PostgreSQL installation"""
     assert is_valid_site_id(site_id)
 
     pgsql_bin_dir = pgsql_bin_directory()
@@ -58,7 +89,7 @@ def pgsql_install(site_id, port, directory_name):
         'ID': port
     }
 
-    # Install MySQL system tables
+    # Install PostgreSQL system tables
     check_call(
         [join(pgsql_bin_dir, 'initdb'),
          '--pgdata=' + datadir,
@@ -79,4 +110,6 @@ def pgsql_install(site_id, port, directory_name):
     ]
 
     templates_to_files(files, tokens, directory_name)
+
+    pgsql_create_user(site_id)
 
